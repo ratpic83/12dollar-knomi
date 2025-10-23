@@ -13,6 +13,9 @@ void DisplayDriver::init() {
   tft.setRotation(0);
   tft.fillScreen(COLOR_BLACK);
   setBrightness(200);
+  
+  // Initialize theme system
+  themeManager.init();
 }
 
 void DisplayDriver::setBrightness(uint8_t brightness) {
@@ -23,7 +26,7 @@ void DisplayDriver::setBrightness(uint8_t brightness) {
 }
 
 void DisplayDriver::clear() {
-  tft.fillScreen(COLOR_BG);
+  tft.fillScreen(getThemeColors().bg);
 }
 
 void DisplayDriver::fillScreen(uint16_t color) {

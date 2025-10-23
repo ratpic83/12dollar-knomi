@@ -23,41 +23,41 @@ void UIManager::showBootScreen() {
   display->clear();
   
   // Draw logo/title
-  display->setTextColor(COLOR_ACCENT);
+  display->setTextColor(display->getThemeColors().accent);
   display->drawCenteredText("KNOMI", 80, 3);
-  display->setTextColor(COLOR_TEXT);
+  display->setTextColor(display->getThemeColors().text);
   display->drawCenteredText("Clone", 110, 2);
   
   // Draw version
-  display->setTextColor(COLOR_GRAY);
-  display->drawCenteredText("v1.0", 140, 1);
+  display->setTextColor(display->getThemeColors().secondary);
+  display->drawCenteredText("v1.1", 140, 1);
   
   // Draw loading indicator
-  display->drawCircle(SCREEN_WIDTH/2, 180, 10, COLOR_ACCENT);
+  display->drawCircle(SCREEN_WIDTH/2, 180, 10, display->getThemeColors().accent);
 }
 
 void UIManager::showConnectingScreen() {
   currentScreen = SCREEN_CONNECTING;
   display->clear();
   
-  display->setTextColor(COLOR_TEXT);
+  display->setTextColor(display->getThemeColors().text);
   display->drawCenteredText("Connecting", 100, 2);
-  display->setTextColor(COLOR_GRAY);
+  display->setTextColor(display->getThemeColors().secondary);
   display->drawCenteredText("to WiFi...", 130, 1);
   
   // Draw WiFi icon
-  display->drawWiFiIcon(SCREEN_WIDTH/2, 170, COLOR_ACCENT, 1);
+  display->drawWiFiIcon(SCREEN_WIDTH/2, 170, display->getThemeColors().accent, 1);
 }
 
 void UIManager::showConnectedScreen() {
   currentScreen = SCREEN_CONNECTED;
   display->clear();
   
-  display->setTextColor(COLOR_SUCCESS);
+  display->setTextColor(display->getThemeColors().success);
   display->drawCenteredText("Connected!", 110, 2);
   
   // Draw checkmark
-  display->drawCheckIcon(SCREEN_WIDTH/2, 160, COLOR_SUCCESS);
+  display->drawCheckIcon(SCREEN_WIDTH/2, 160, display->getThemeColors().success);
 }
 
 void UIManager::showWiFiError() {
@@ -66,13 +66,13 @@ void UIManager::showWiFiError() {
   currentScreen = SCREEN_WIFI_ERROR;
   display->clear();
   
-  display->setTextColor(COLOR_ERROR);
+  display->setTextColor(display->getThemeColors().error);
   display->drawCenteredText("WiFi Error", 100, 2);
-  display->setTextColor(COLOR_GRAY);
+  display->setTextColor(display->getThemeColors().secondary);
   display->drawCenteredText("Check config", 130, 1);
   
   // Draw error icon
-  display->drawErrorIcon(SCREEN_WIDTH/2, 170, COLOR_ERROR);
+  display->drawErrorIcon(SCREEN_WIDTH/2, 170, display->getThemeColors().error);
 }
 
 void UIManager::showKlipperError() {
@@ -81,14 +81,14 @@ void UIManager::showKlipperError() {
   currentScreen = SCREEN_KLIPPER_ERROR;
   display->clear();
   
-  display->setTextColor(COLOR_ERROR);
+  display->setTextColor(display->getThemeColors().error);
   display->drawCenteredText("Klipper", 90, 2);
   display->drawCenteredText("Offline", 120, 2);
-  display->setTextColor(COLOR_GRAY);
+  display->setTextColor(display->getThemeColors().secondary);
   display->drawCenteredText("Reconnecting...", 150, 1);
   
   // Draw printer icon
-  display->drawPrinterIcon(SCREEN_WIDTH/2 - 15, 175, COLOR_ERROR);
+  display->drawPrinterIcon(SCREEN_WIDTH/2 - 15, 175, display->getThemeColors().error);
 }
 
 void UIManager::updateStatus(PrinterStatus& status) {
@@ -143,13 +143,13 @@ void UIManager::drawIdleScreen(PrinterStatus& status) {
   display->drawRollingEyes(animationFrame);
   
   // Draw status text at bottom
-  display->setTextColor(COLOR_TEXT);
+  display->setTextColor(display->getThemeColors().text);
   display->drawCenteredText("Ready", 210, 2);
   
   // Draw temperatures
   char tempStr[32];
   sprintf(tempStr, "%.0f/%.0f", status.hotendTemp, status.hotendTarget);
-  display->setTextColor(COLOR_ORANGE);
+  display->setTextColor(display->getThemeColors().highlight);
   display->drawCenteredText(tempStr, 230, 1);
 }
 
@@ -162,7 +162,7 @@ void UIManager::drawPrintingScreen(PrinterStatus& status) {
   // Draw progress percentage in center
   char progressStr[8];
   sprintf(progressStr, "%d%%", status.printProgress);
-  display->setTextColor(COLOR_TEXT);
+  display->setTextColor(display->getThemeColors().text);
   display->drawCenteredText(progressStr, 110, 3);
   
   // Draw temperature gauges in corners
@@ -170,14 +170,14 @@ void UIManager::drawPrintingScreen(PrinterStatus& status) {
   
   // Draw time remaining at top
   if (status.printTimeLeft > 0) {
-    display->setTextColor(COLOR_GRAY);
+    display->setTextColor(display->getThemeColors().secondary);
     String timeStr = formatTime(status.printTimeLeft);
     display->drawCenteredText("ETA: " + timeStr, 30, 1);
   }
   
   // Draw filename (truncated)
   if (status.fileName.length() > 0) {
-    display->setTextColor(COLOR_ACCENT);
+    display->setTextColor(display->getThemeColors().accent);
     String shortName = status.fileName;
     if (shortName.length() > 20) {
       shortName = shortName.substring(0, 17) + "...";
@@ -186,7 +186,7 @@ void UIManager::drawPrintingScreen(PrinterStatus& status) {
   }
   
   // Draw Z height at bottom
-  display->setTextColor(COLOR_GRAY);
+  display->setTextColor(display->getThemeColors().secondary);
   char zStr[16];
   sprintf(zStr, "Z:%.2f", status.posZ);
   display->drawCenteredText(zStr, 225, 1);
@@ -199,19 +199,19 @@ void UIManager::drawPausedScreen(PrinterStatus& status) {
   drawProgressCircle(status.printProgress);
   
   // Draw PAUSED text
-  display->setTextColor(COLOR_WARNING);
+  display->setTextColor(display->getThemeColors().warning);
   display->drawCenteredText("PAUSED", 110, 2);
   
   // Draw progress percentage
   char progressStr[8];
   sprintf(progressStr, "%d%%", status.printProgress);
-  display->setTextColor(COLOR_TEXT);
+  display->setTextColor(display->getThemeColors().text);
   display->drawCenteredText(progressStr, 140, 2);
   
   // Draw temperatures
-  display->setTextColor(COLOR_ORANGE);
   char tempStr[32];
   sprintf(tempStr, "E:%.0f B:%.0f", status.hotendTemp, status.bedTemp);
+  display->setTextColor(display->getThemeColors().highlight);
   display->drawCenteredText(tempStr, 170, 1);
 }
 
@@ -219,14 +219,14 @@ void UIManager::drawCompleteScreen(PrinterStatus& status) {
   display->clear();
   
   // Draw checkmark
-  display->drawCheckIcon(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 20, COLOR_SUCCESS);
+  display->drawCheckIcon(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 20, display->getThemeColors().success);
   
   // Draw COMPLETE text
-  display->setTextColor(COLOR_SUCCESS);
+  display->setTextColor(display->getThemeColors().success);
   display->drawCenteredText("COMPLETE", 150, 2);
   
   // Draw print time
-  display->setTextColor(COLOR_GRAY);
+  display->setTextColor(display->getThemeColors().secondary);
   String timeStr = formatTime(status.printTime);
   display->drawCenteredText(timeStr, 180, 1);
 }
@@ -235,41 +235,41 @@ void UIManager::drawErrorScreen() {
   display->clear();
   
   // Draw error icon
-  display->drawErrorIcon(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 20, COLOR_ERROR);
+  display->drawErrorIcon(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 20, display->getThemeColors().error);
   
   // Draw ERROR text
-  display->setTextColor(COLOR_ERROR);
+  display->setTextColor(display->getThemeColors().error);
   display->drawCenteredText("ERROR", 150, 2);
-  display->setTextColor(COLOR_GRAY);
+  display->setTextColor(display->getThemeColors().secondary);
   display->drawCenteredText("Check printer", 180, 1);
 }
 
 void UIManager::drawTemperatureGauges(PrinterStatus& status) {
   // Draw hotend gauge in top-left
-  display->drawTemperatureGauge(45, 45, 25, status.hotendTemp, status.hotendTarget, COLOR_ORANGE);
-  display->setTextColor(COLOR_ORANGE);
+  display->drawTemperatureGauge(45, 45, 25, status.hotendTemp, status.hotendTarget, display->getThemeColors().highlight);
+  display->setTextColor(display->getThemeColors().highlight);
   display->setTextSize(1);
   char hotendStr[8];
   sprintf(hotendStr, "%.0f", status.hotendTemp);
   display->drawCenteredText(hotendStr, 45 + 40, 1);
   
   // Draw bed gauge in top-right
-  display->drawTemperatureGauge(SCREEN_WIDTH - 45, 45, 25, status.bedTemp, status.bedTarget, COLOR_BLUE);
-  display->setTextColor(COLOR_BLUE);
+  display->drawTemperatureGauge(SCREEN_WIDTH - 45, 45, 25, status.bedTemp, status.bedTarget, display->getThemeColors().text);
+  display->setTextColor(display->getThemeColors().text);
   char bedStr[8];
   sprintf(bedStr, "%.0f", status.bedTemp);
-  display->drawCenteredText(bedStr, 45 + 40, 1);
+  display->drawCenteredText(bedStr, SCREEN_WIDTH - 45 + 40, 1);
   
   // Draw target indicators if available
   if (status.hotendTarget > 0) {
-    display->setTextColor(COLOR_GRAY);
+    display->setTextColor(display->getThemeColors().secondary);
     char targetStr[8];
     sprintf(targetStr, "/%.0f", status.hotendTarget);
     display->drawCenteredText(targetStr, 45 + 50, 1);
   }
   
   if (status.bedTarget > 0) {
-    display->setTextColor(COLOR_GRAY);
+    display->setTextColor(display->getThemeColors().secondary);
     char targetStr[8];
     sprintf(targetStr, "/%.0f", status.bedTarget);
     display->drawCenteredText(targetStr, SCREEN_WIDTH - 45 + 50, 1);

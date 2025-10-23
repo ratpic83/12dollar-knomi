@@ -10,13 +10,14 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
+#include "Theme.h"
 
 // Display dimensions
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 240
 #define SCREEN_RADIUS 120
 
-// Colors (RGB565 format)
+// Legacy color defines for backward compatibility (now use theme colors)
 #define COLOR_BLACK       0x0000
 #define COLOR_WHITE       0xFFFF
 #define COLOR_RED         0xF800
@@ -30,13 +31,7 @@
 #define COLOR_DARK_GRAY   0x4208
 #define COLOR_LIGHT_GRAY  0xC618
 
-// Custom colors for UI
-#define COLOR_BG          0x0000      // Black background
-#define COLOR_TEXT        0xFFFF      // White text
-#define COLOR_ACCENT      0x07FF      // Cyan accent
-#define COLOR_WARNING     0xFD20      // Orange warning
-#define COLOR_ERROR       0xF800      // Red error
-#define COLOR_SUCCESS     0x07E0      // Green success
+// Theme-based color access (preferred)
 
 class DisplayDriver {
 public:
@@ -45,6 +40,14 @@ public:
   // Initialization
   void init();
   void setBrightness(uint8_t brightness);
+  
+  // Theme management
+  void setTheme(ThemeType theme) { themeManager.setTheme(theme); }
+  ThemeType getCurrentTheme() const { return themeManager.getCurrentTheme(); }
+  const ThemeColors& getThemeColors() const { return themeManager.getColors(); }
+  const char* getThemeName() const { return themeManager.getThemeName(); }
+  void nextTheme() { themeManager.nextTheme(); }
+  void previousTheme() { themeManager.previousTheme(); }
   
   // Basic drawing
   void clear();
@@ -92,6 +95,7 @@ public:
 private:
   TFT_eSPI tft;
   uint8_t currentBrightness;
+  ThemeManager themeManager;
   
   // Helper functions
   int16_t getTextWidth(const char* text, uint8_t size);
