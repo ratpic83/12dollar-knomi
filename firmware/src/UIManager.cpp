@@ -288,6 +288,17 @@ void UIManager::drawTemperatureGauges(PrinterStatus& status) {
   }
 }
 
+void UIManager::drawProgressCircle(uint8_t progress) {
+  // Draw progress ring in center of screen
+  int16_t centerX = SCREEN_WIDTH / 2;
+  int16_t centerY = SCREEN_HEIGHT / 2;
+  int16_t radius = 75;
+  int16_t thickness = 12;
+  uint16_t color = display->getThemeColors().highlight;
+  
+  display->drawProgressRing(centerX, centerY, radius, thickness, progress, color);
+}
+
 void UIManager::update() {
   unsigned long currentTime = millis();
   
