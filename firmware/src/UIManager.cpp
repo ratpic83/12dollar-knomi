@@ -156,7 +156,7 @@ void UIManager::drawIdleScreen(PrinterStatus& status) {
 void UIManager::drawPrintingScreen(PrinterStatus& status) {
   display->clear();
   
-  // Draw progress ring
+  // Draw progress ring with enhanced visuals
   drawProgressCircle(status.printProgress);
   
   // Draw progress percentage in center
@@ -165,17 +165,14 @@ void UIManager::drawPrintingScreen(PrinterStatus& status) {
   display->setTextColor(COLOR_TEXT);
   display->drawCenteredText(progressStr, 110, 3);
   
-  // Draw temperatures
-  display->setTextColor(COLOR_ORANGE);
-  char tempStr[32];
-  sprintf(tempStr, "E:%.0f B:%.0f", status.hotendTemp, status.bedTemp);
-  display->drawCenteredText(tempStr, 145, 1);
+  // Draw temperature gauges in corners
+  drawTemperatureGauges(status);
   
-  // Draw time remaining
+  // Draw time remaining at top
   if (status.printTimeLeft > 0) {
     display->setTextColor(COLOR_GRAY);
     String timeStr = formatTime(status.printTimeLeft);
-    display->drawCenteredText(timeStr, 165, 1);
+    display->drawCenteredText("ETA: " + timeStr, 30, 1);
   }
   
   // Draw filename (truncated)
@@ -185,14 +182,14 @@ void UIManager::drawPrintingScreen(PrinterStatus& status) {
     if (shortName.length() > 20) {
       shortName = shortName.substring(0, 17) + "...";
     }
-    display->drawCenteredText(shortName, 190, 1);
+    display->drawCenteredText(shortName, 200, 1);
   }
   
-  // Draw Z height
+  // Draw Z height at bottom
   display->setTextColor(COLOR_GRAY);
   char zStr[16];
   sprintf(zStr, "Z:%.2f", status.posZ);
-  display->drawCenteredText(zStr, 210, 1);
+  display->drawCenteredText(zStr, 225, 1);
 }
 
 void UIManager::drawPausedScreen(PrinterStatus& status) {
@@ -247,8 +244,36 @@ void UIManager::drawErrorScreen() {
   display->drawCenteredText("Check printer", 180, 1);
 }
 
-void UIManager::drawProgressCircle(uint8_t progress) {
-  display->drawProgressRing(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, 80, 8, progress, COLOR_ACCENT);
+void UIManager::drawTemperatureGauges(PrinterStatus& status) {
+  // Draw hotend gauge in top-left
+  display->drawTemperatureGauge(45, 45, 25, status.hotendTemp, status.hotendTarget, COLOR_ORANGE);
+  display->setTextColor(COLOR_ORANGE);
+  display->setTextSize(1);
+  char hotendStr[8];
+  sprintf(hotendStr, "%.0f", status.hotendTemp);
+  display->drawCenteredText(hotendStr, 45 + 40, 1);
+  
+  // Draw bed gauge in top-right
+  display->drawTemperatureGauge(SCREEN_WIDTH - 45, 45, 25, status.bedTemp, status.bedTarget, COLOR_BLUE);
+  display->setTextColor(COLOR_BLUE);
+  char bedStr[8];
+  sprintf(bedStr, "%.0f", status.bedTemp);
+  display->drawCenteredText(bedStr, 45 + 40, 1);
+  
+  // Draw target indicators if available
+  if (status.hotendTarget > 0) {
+    display->setTextColor(COLOR_GRAY);
+    char targetStr[8];
+    sprintf(targetStr, "/%.0f", status.hotendTarget);
+    display->drawCenteredText(targetStr, 45 + 50, 1);
+  }
+  
+  if (status.bedTarget > 0) {
+    display->setTextColor(COLOR_GRAY);
+    char targetStr[8];
+    sprintf(targetStr, "/%.0f", status.bedTarget);
+    display->drawCenteredText(targetStr, SCREEN_WIDTH - 45 + 50, 1);
+  }
 }
 
 void UIManager::update() {

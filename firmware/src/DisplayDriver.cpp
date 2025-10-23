@@ -131,15 +131,39 @@ void DisplayDriver::drawArc(int16_t x, int16_t y, int16_t r, int16_t startAngle,
 }
 
 void DisplayDriver::drawProgressRing(int16_t x, int16_t y, int16_t r, int16_t thickness, uint8_t progress, uint16_t color) {
-  // Draw background ring
+  // Draw background ring with anti-aliasing
   for (int i = 0; i < thickness; i++) {
-    drawCircle(x, y, r - i, COLOR_DARK_GRAY);
+    int16_t innerR = r - i;
+    int16_t outerR = r - i + 1;
+    
+    // Draw full background circle with subtle gradient
+    fillCircle(x, y, innerR, COLOR_DARK_GRAY);
+    
+    // Add subtle inner glow for depth
+    if (i == 0) {
+      drawCircle(x, y, innerR + 1, COLOR_LIGHT_GRAY);
+    }
   }
   
-  // Draw progress arc
+  // Calculate progress arc with anti-aliasing
   int endAngle = -90 + (360 * progress / 100);
+  
+  // Draw progress arc with multiple thickness layers for anti-aliasing effect
   for (int i = 0; i < thickness; i++) {
-    drawArc(x, y, r - i, -90, endAngle, color);
+    int16_t arcR = r - i;
+    drawArc(x, y, arcR, -90, endAngle, color);
+    
+    // Add inner highlight for 3D effect
+    if (i == 0 && progress > 5) {
+      int16_t highlightR = r - thickness/2;
+      drawArc(x, y, highlightR, -90, endAngle - 10, COLOR_WHITE);
+    }
+  }
+  
+  // Draw center dot if progress > 0
+  if (progress > 0) {
+    fillCircle(x, y, 3, color);
+    fillCircle(x, y, 1, COLOR_WHITE);
   }
 }
 
@@ -193,20 +217,31 @@ void DisplayDriver::drawEye(int16_t x, int16_t y, int16_t size, int16_t pupilX, 
 void DisplayDriver::drawRollingEyes(int16_t frame) {
   clear();
   
-  // Calculate pupil position based on frame (circular motion)
-  float angle = (frame % 360) * PI / 180.0;
-  int16_t pupilOffset = 8;
-  int16_t pupilX = pupilOffset * cos(angle);
-  int16_t pupilY = pupilOffset * sin(angle);
+  // Calculate pupil position with smooth easing (sinusoidal)
+  float t = (frame % 360) / 360.0; // 0 to 1 over 360 frames
+  float easedT = (sin(t * 2 * PI - PI/2) + 1) / 2; // Smooth sine wave
   
-  // Blink every 60 frames
-  bool blinking = (frame % 60 < 5);
+  int16_t pupilOffset = 6 + (int16_t)(4 * sin(t * 2 * PI)); // Dynamic range 6-10
+  int16_t pupilX = pupilOffset * cos(easedT * 2 * PI);
+  int16_t pupilY = pupilOffset * sin(easedT * 2 * PI);
   
-  // Draw two eyes
-  int16_t eyeSize = 30;
-  int16_t eyeSpacing = 50;
+  // Blink with varying duration
+  bool blinking = ((frame % 120) < 8) || ((frame % 180) < 5); // Occasional blinks
+  
+  // Draw two eyes with enhanced details
+  int16_t eyeSize = 35;
+  int16_t eyeSpacing = 55;
+  
   drawEye(SCREEN_WIDTH/2 - eyeSpacing, SCREEN_HEIGHT/2, eyeSize, pupilX, pupilY, blinking);
   drawEye(SCREEN_WIDTH/2 + eyeSpacing, SCREEN_HEIGHT/2, eyeSize, pupilX, pupilY, blinking);
+  
+  // Add subtle background breathing effect
+  if (!blinking) {
+    uint8_t breath = 50 + (uint8_t)(30 * sin(frame * 0.02)); // Slow breathing
+    for (int r = 110; r < 115; r++) {
+      drawCircle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, r, tft.color565(breath, breath, breath));
+    }
+  }
 }
 
 void DisplayDriver::drawPrinterIcon(int16_t x, int16_t y, uint16_t color) {

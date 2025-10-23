@@ -64,6 +64,7 @@ private:
   void drawTemperatureDisplay(float temp, float target, const char* label, int16_t y);
   void drawProgressCircle(uint8_t progress);
   void drawPrintInfo(PrinterStatus& status);
+  void drawTemperatureGauges(PrinterStatus& status);
   
   // Animations
   void updateRollingEyes();
