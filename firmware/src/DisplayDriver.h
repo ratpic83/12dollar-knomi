@@ -88,6 +88,7 @@ public:
   void drawWiFiIcon(int16_t x, int16_t y, uint16_t color, int8_t strength);
   void drawErrorIcon(int16_t x, int16_t y, uint16_t color);
   void drawCheckIcon(int16_t x, int16_t y, uint16_t color);
+  void drawTouchFeedbackRing(uint8_t alpha);
   
   // Get display object for advanced operations
   TFT_eSPI* getTFT() { return &tft; }

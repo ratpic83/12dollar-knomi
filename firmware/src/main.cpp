@@ -3,6 +3,7 @@
 #include "UIManager.h"
 #include "KlipperAPI.h"
 #include "Environmental.h"
+#include "TouchDriver.h"
 #include "WifiConfig.h"
 
 // Global instances
@@ -10,6 +11,7 @@ DisplayDriver display;
 UIManager ui;
 KlipperAPI api;
 EnvironmentalSensor envSensor;
+TouchDriver touchDriver;
 
 // Theme cycling button (GPIO 9 - can connect a button here)
 const int THEME_BUTTON_PIN = 9;
@@ -32,6 +34,13 @@ void setup() {
     Serial.println("Environmental sensor initialized");
   } else {
     Serial.println("Environmental sensor not found");
+  }
+
+  // Initialize touch driver (FT6236 on I2C)
+  if (touchDriver.begin(18, 19)) { // SDA=18, SCL=19
+    Serial.println("Touch driver initialized");
+  } else {
+    Serial.println("Touch driver not found");
   }
 
   // Check if device is configured
@@ -113,6 +122,19 @@ void loop() {
 
   // Update UI animations
   ui.update();
+
+  // Update touch driver and handle touch events
+  touchDriver.update();
+  
+  // Handle touch gestures
+  TouchEvent touchEvent = touchDriver.getEvent();
+  if (touchEvent != TOUCH_NONE) {
+    ui.handleTouchEvent(touchEvent, touchDriver.getPoint());
+    
+    // Debug touch events
+    Serial.printf("Touch: Event=%d, Point=(%d,%d)\n", 
+                  touchEvent, touchDriver.getPoint().x, touchDriver.getPoint().y);
+  }
 
   delay(10);
 }

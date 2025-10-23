@@ -13,8 +13,16 @@
 ### Connectivity & Configuration
 - **WiFi Integration**: Direct connection to Klipper via Moonraker API
 - **Web Configuration Portal**: Captive portal setup (framework ready)
-- **Theme Switching**: GPIO button for instant theme changes
+- **Theme Switching**: GPIO button or touch screen theme cycling
+- **Touch Screen Support**: Capacitive touch with gesture recognition
 - **EEPROM Persistence**: Settings saved across power cycles
+
+### Touch & Interaction
+- **Capacitive Touch**: FT6236 touch controller support
+- **Gesture Recognition**: Tap, double-tap, swipe gestures
+- **Touch Feedback**: Visual feedback rings with theme colors
+- **Theme Switching**: Touch to cycle through 4 color schemes
+- **Touch Zones**: Framework for interactive UI elements
 
 ### Environmental Monitoring
 - **Sensor Support**: BME280, DHT11/22, SHT30 sensors
@@ -180,6 +188,7 @@ We welcome contributions! See areas where you can help:
 
 ## Performance Targets
 
+### Current Version: v1.3.0 (2025-10-23)
 ### Current Performance
 - **Update Rate**: 1 Hz (1 second intervals)
 - **Boot Time**: ~3-5 seconds

@@ -10,6 +10,7 @@
 #include <Arduino.h>
 #include "DisplayDriver.h"
 #include "KlipperAPI.h"
+#include "TouchDriver.h"
 
 // Screen types
 enum ScreenType {
@@ -44,6 +45,9 @@ public:
   
   // Animation update (call in loop)
   void update();
+  
+  // Touch event handling
+  void handleTouchEvent(TouchEvent event, TouchPoint point);
   
 private:
   DisplayDriver* display;

@@ -49,8 +49,17 @@ void DisplayDriver::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_
   tft.fillRect(x, y, w, h, color);
 }
 
-void DisplayDriver::drawCircle(int16_t x, int16_t y, int16_t r, uint16_t color) {
-  tft.drawCircle(x, y, r, color);
+void DisplayDriver::drawTouchFeedbackRing(uint8_t alpha) {
+  // Draw a fading ring around the screen perimeter
+  uint16_t color = getThemeColors().highlight; // Use theme highlight color
+  
+  // Draw outer ring
+  tft.drawCircle(120, 120, 118, tft.alphaBlend(alpha, color, TFT_BLACK));
+  tft.drawCircle(120, 120, 117, tft.alphaBlend(alpha, color, TFT_BLACK));
+  
+  // Draw inner ring
+  tft.drawCircle(120, 120, 115, tft.alphaBlend(alpha, color, TFT_BLACK));
+  tft.drawCircle(120, 120, 116, tft.alphaBlend(alpha, color, TFT_BLACK));
 }
 
 void DisplayDriver::fillCircle(int16_t x, int16_t y, int16_t r, uint16_t color) {

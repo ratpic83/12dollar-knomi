@@ -289,19 +289,33 @@ void UIManager::drawTemperatureGauges(PrinterStatus& status) {
 }
 
 void UIManager::update() {
-  unsigned long currentMillis = millis();
+  unsigned long currentTime = millis();
   
-  // Update animations
-  if (currentMillis - lastAnimationUpdate >= ANIMATION_SPEED) {
-    lastAnimationUpdate = currentMillis;
-    animationFrame++;
+  if (currentTime - lastAnimationUpdate > 100) { // 10 FPS animation
+    lastAnimationUpdate = currentTime;
     
-    // Update screen-specific animations
-    if (currentScreen == SCREEN_IDLE) {
-      updateRollingEyes();
-    } else if (currentScreen == SCREEN_PRINTING) {
-      updatePrintingAnimation();
+    // Update animations based on current screen
+    switch (currentScreen) {
+      case SCREEN_IDLE:
+        updateRollingEyes();
+        break;
+      case SCREEN_PRINTING:
+      case SCREEN_PAUSED:
+        updatePrintingAnimation();
+        break;
+      default:
+        // No animation for other screens
+        break;
     }
+    
+    animationFrame++;
+  }
+  
+  // Handle touch feedback animation
+  if (currentTime - lastTouchFeedback < TOUCH_FEEDBACK_DURATION) {
+    // Show touch feedback ring
+    int alpha = 255 - ((currentTime - lastTouchFeedback) * 255 / TOUCH_FEEDBACK_DURATION);
+    display->drawTouchFeedbackRing(alpha);
   }
 }
 
@@ -352,4 +366,65 @@ String UIManager::formatTemperature(float temp, float target) {
     sprintf(tempStr, "%.0f", temp);
   }
   return String(tempStr);
+}
+
+// Touch feedback animation
+static unsigned long lastTouchFeedback = 0;
+static const unsigned long TOUCH_FEEDBACK_DURATION = 200; // 200ms feedback
+
+void UIManager::handleTouchEvent(TouchEvent event, TouchPoint point) {
+  // Handle different touch events
+  switch (event) {
+    case TOUCH_GESTURE_TAP:
+      // Handle tap gesture - theme switching
+      if (currentScreen == SCREEN_IDLE || currentScreen == SCREEN_PRINTING) {
+        display->nextTheme();
+        // Redraw current screen to show new theme
+        if (currentScreen == SCREEN_IDLE) {
+          drawIdleScreen(lastStatus);
+        } else if (currentScreen == SCREEN_PRINTING) {
+          drawPrintingScreen(lastStatus);
+        }
+        Serial.println("Touch: Theme switched via tap");
+      }
+      break;
+      
+    case TOUCH_GESTURE_DOUBLE_TAP:
+      // Handle double tap - could be used for other functions
+      Serial.println("Touch: Double tap detected");
+      break;
+      
+    case TOUCH_GESTURE_SWIPE_LEFT:
+    case TOUCH_GESTURE_SWIPE_RIGHT:
+      // Handle swipe gestures - could navigate between screens
+      Serial.println("Touch: Swipe gesture detected");
+      break;
+      
+    case TOUCH_GESTURE_SWIPE_UP:
+      // Swipe up - show more details or next screen
+      Serial.println("Touch: Swipe up detected");
+      break;
+      
+    case TOUCH_GESTURE_SWIPE_DOWN:
+      // Swipe down - show less details or previous screen
+      Serial.println("Touch: Swipe down detected");
+      break;
+      
+    case TOUCH_DOWN:
+      // Touch pressed down - show visual feedback
+      lastTouchFeedback = millis();
+      // Could add visual touch feedback here
+      break;
+      
+    case TOUCH_UP:
+      // Touch released
+      break;
+      
+    case TOUCH_MOVE:
+      // Touch moving (dragging)
+      break;
+      
+    default:
+      break;
+  }
 }

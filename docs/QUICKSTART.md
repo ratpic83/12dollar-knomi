@@ -177,7 +177,8 @@ Your Knomi Clone is now running!
 - "Ready" status
 - Current temperatures
 - **Environmental data** (if sensors connected)
-- **Theme selection** via GPIO 9 button
+- **Theme selection** via GPIO 9 button OR **touch tap**
+- **Touch feedback** rings when interacting
 
 **When Printing:**
 - HD progress ring with anti-aliasing

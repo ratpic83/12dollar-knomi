@@ -72,6 +72,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Limited to 2.4GHz WiFi
 - No web configuration interface
 
+## [1.3.0] - 2025-10-23
+
+### Added
+- **Touch Screen Support**: Complete capacitive touch implementation
+  - FT6236 touch controller support
+  - Gesture recognition (tap, double-tap, swipe)
+  - Touch zones for UI interaction
+  - Visual touch feedback animations
+- **Touch Interactions**: Intuitive touch controls
+  - Tap to cycle through themes (idle/printing screens)
+  - Swipe gestures for navigation (framework ready)
+  - Touch feedback rings with theme-aware colors
+  - Capacitive touch detection with noise filtering
+- **Enhanced User Experience**: Professional touch interface
+  - 200ms touch feedback animations
+  - Gesture threshold configuration
+  - Touch event debugging output
+  - Theme-aware touch feedback colors
+
+### Improved
+- **UI Responsiveness**: Instant theme switching via touch
+- **Hardware Integration**: I2C touch controller auto-detection
+- **Performance**: Optimized touch event processing
+- **Documentation**: Touch setup and usage guides
+
+### Technical Details
+- Added `TouchDriver.h/cpp` for capacitive touch handling
+- Added `handleTouchEvent()` method to UIManager
+- Added `drawTouchFeedbackRing()` to DisplayDriver
+- Integrated touch updates in main application loop
+- Touch library: `adafruit/Adafruit_FT6236@^1.1.1`
+
 ## [1.2.0] - 2025-10-23
 
 ### Added
@@ -154,6 +186,7 @@ See CONTRIBUTING.md for guidelines on submitting changes.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.3.0 | 2025-10-23 | Touch screen support, gesture recognition, visual feedback |
 | 1.2.0 | 2025-10-23 | Theme system, environmental sensors, web portal, HD graphics |
 | 1.1.0 | 2025-10-23 | PlatformIO migration, improved build system |
 | 1.0.0 | 2024-10-21 | Initial release, basic functionality |
