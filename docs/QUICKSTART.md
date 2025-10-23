@@ -103,7 +103,7 @@ Get your Knomi Clone up and running in 15 minutes!
 
 ### Step 6: Configure Klipper (Optional, 2 minutes)
 
-For enhanced features (homing/leveling status):
+For **enhanced features** (homing/leveling status indicators - future use):
 
 1. SSH to your Klipper host:
    ```bash
@@ -134,6 +134,8 @@ For enhanced features (homing/leveling status):
    ```bash
    sudo systemctl restart klipper
    ```
+
+**Note**: This step is optional. The display works perfectly without it, but enables future features like homing/leveling status display.
 
 ---
 

@@ -6,6 +6,8 @@ This guide explains how to configure Klipper to work with the Knomi Clone displa
 
 The Knomi Clone communicates with Klipper via the Moonraker HTTP API. It polls for printer status, temperatures, and print progress at regular intervals.
 
+**Basic functionality works without any Klipper configuration!** The optional Klipper config adds enhanced features like homing/leveling status tracking.
+
 ## Prerequisites
 
 - Klipper installed and running
@@ -13,9 +15,17 @@ The Knomi Clone communicates with Klipper via the Moonraker HTTP API. It polls f
 - Network connectivity between display and Klipper host
 - Moonraker API accessible on port 7125
 
-## Installation Steps
+## Basic Setup (Required)
 
-### 1. Verify Moonraker is Running
+The display works out-of-the-box with standard Klipper installations. Just configure the IP address in `WifiConfig.h`.
+
+## Enhanced Setup (Optional)
+
+The optional Klipper configuration enables future features like homing/leveling status indicators.
+
+### Installation Steps
+
+#### 1. Verify Moonraker is Running
 
 Test Moonraker API access:
 
@@ -25,7 +35,7 @@ curl http://[YOUR_KLIPPER_IP]:7125/server/info
 
 You should see JSON response with server information.
 
-### 2. Copy Configuration File
+#### 2. Copy Configuration File
 
 Copy the Knomi configuration to your Klipper config directory:
 
@@ -44,7 +54,7 @@ nano knomi.cfg
 # Paste contents from klipper_config/knomi.cfg
 ```
 
-### 3. Include in printer.cfg
+#### 3. Include in printer.cfg
 
 Add this line to your `printer.cfg`:
 
@@ -54,7 +64,7 @@ Add this line to your `printer.cfg`:
 
 Place it near the top with other includes.
 
-### 4. Restart Klipper
+#### 4. Restart Klipper
 
 ```bash
 # Via Mainsail/Fluidd web interface
@@ -62,7 +72,7 @@ Place it near the top with other includes.
 sudo systemctl restart klipper
 ```
 
-### 5. Verify Configuration
+#### 5. Verify Configuration
 
 Check that macros are loaded:
 
@@ -71,7 +81,17 @@ Check that macros are loaded:
 KNOMI_STATUS MSG="Test Message"
 ```
 
-## Configuration Details
+## Features Enabled by Klipper Config
+
+### Current Features
+- **Print status messages**: Custom notifications during print jobs
+- **Enhanced macro integration**: Print start/end notifications
+
+### Future Features (Framework Ready)
+- **Homing status**: Show "Homing..." when G28 is running
+- **Leveling status**: Show "Leveling..." during bed mesh calibration
+- **Custom notifications**: User-defined status messages
+- **Error reporting**: Automatic error notifications
 
 ### Macro Variables
 
