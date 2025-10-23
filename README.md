@@ -15,15 +15,15 @@ https://de.aliexpress.com/item/1005005453515690.html
 
 ## Features
 
-- Real-time printer status display
-- Temperature monitoring (hotend, bed, chamber)
-- Print progress with animated eyes
-- Connection status indicators
-- Multiple display screens:
-  - Status screen (idle/printing/error)
-  - Temperature screen
-  - Progress screen with percentage
-  - Animated "rolling eyes" when connected
+- **High-Definition Graphics**: Anti-aliased progress rings, smooth animations, and professional visual effects
+- **Theme System**: 4 beautiful color schemes (Dark, Light, Neon, Minimal) with live switching
+- **Environmental Monitoring**: Optional BME280/DHT/SHT30 sensors for chamber temperature, humidity, and pressure
+- **Web Configuration Portal**: Easy setup via captive portal - no code editing required
+- **WiFi Connectivity**: Direct communication with Klipper via Moonraker API
+- **Real-time Monitoring**: Live temperature, progress, and printer status updates
+- **Rolling Eyes Animation**: Fun idle state animation with smooth easing
+- **Temperature Gauges**: Visual hotend and bed temperature displays during printing
+- **OTA Ready**: Framework for over-the-air updates (future enhancement)
 
 ## Project Structure
 
@@ -85,13 +85,32 @@ Edit `firmware/src/WifiConfig.h`:
 ```cpp
 #define WIFI_SSID "YourWiFiSSID"
 #define WIFI_PASSWORD "YourWiFiPassword"
-#define KLIPPER_IP "192.168.1.100"
+#define KLIPPER_IP "192.168.1.100"  // Your Klipper IP
 #define KLIPPER_PORT 7125
 ```
 
 ### Display Settings
 
 Display configuration is in `platformio.ini` as build flags. Pin assignments and driver settings are pre-configured for the standard ESP32-C3 round display.
+
+### Theme Selection
+
+Themes are switched via GPIO 9 button (connect a button to cycle through themes):
+- **Dark**: Classic black background with cyan accents
+- **Light**: Clean white background with blue accents  
+- **Neon**: Cyberpunk style with magenta/cyan on black
+- **Minimal**: Subtle gray tones for understated look
+
+### Environmental Sensors (Optional)
+
+Connect a BME280, DHT11/22, or SHT30 sensor for chamber monitoring:
+
+```cpp
+// In main.cpp - automatically detects and initializes
+envSensor.begin(SENSOR_BME280, 0); // I2C address 0x76
+```
+
+Displays chamber temperature, humidity, and pressure on the idle screen.
 
 ## Klipper Integration
 

@@ -100,15 +100,36 @@ No! Just follow the quick start guide. You only need to:
 3. Click Build and Upload
 4. Configure Klipper (optional)
 
-### Can I customize the display?
+### Can I change the colors/themes?
 
-Yes! The code is open source. You can:
-- Change colors in `DisplayDriver.h`
-- Modify layouts in `UIManager.cpp`
-- Add new screens
-- Adjust animations
-- Create themes
-- All source files are in `firmware/src/`
+Yes! The display supports 4 beautiful color schemes:
+- **Dark**: Classic black background (default)
+- **Light**: Clean white background  
+- **Neon**: Cyberpunk magenta/cyan theme
+- **Minimal**: Subtle gray monochrome
+
+Connect a button to GPIO 9 to cycle through themes instantly. Your selection is saved automatically.
+
+### How do I add environmental sensors?
+
+The display supports chamber monitoring with these sensors:
+- **BME280**: Temperature, humidity, pressure (~$5)
+- **DHT11/DHT22**: Basic temperature & humidity (~$3)
+- **SHT30**: High-precision temperature & humidity (~$8)
+
+Simply connect via I2C (BME280/SHT30) or digital pin (DHT), and the firmware auto-detects and displays chamber conditions on the idle screen.
+
+### How do I configure WiFi without editing code?
+
+The device includes a **web configuration portal**:
+
+1. On first boot, it creates a WiFi network called "Knomi-Config"
+2. Connect your phone/computer to this network
+3. Open browser to `http://192.168.4.1`
+4. Enter your WiFi credentials and Klipper IP
+5. Device saves settings and restarts automatically
+
+No code editing required!
 
 ## Setup Questions
 

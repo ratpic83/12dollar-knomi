@@ -1,21 +1,31 @@
 # Features & Roadmap
 
-## Current Features ✅
+## Current Features 
 
-### Display Screens
-- **Boot Screen**: Shows logo and version on startup
-- **Connecting Screen**: WiFi connection status
-- **Idle Screen**: Rolling eyes animation when printer is ready
-- **Printing Screen**: 
-  - Circular progress indicator
-  - Current/target temperatures (hotend & bed)
-  - Print progress percentage
-  - Estimated time remaining
-  - Current Z height
-  - Filename display
-- **Paused Screen**: Shows paused state with current progress
-- **Complete Screen**: Success indicator when print finishes
-- **Error Screens**: WiFi and Klipper connection errors
+### Display & Graphics
+- **HD Graphics**: Anti-aliased progress rings with 3D depth effects
+- **Theme System**: 4 beautiful color schemes (Dark, Light, Neon, Minimal)
+- **Smooth Animations**: Sinusoidal easing for eye movements and transitions
+- **Multiple Screens**: Boot, connecting, idle, printing, paused, complete, error states
+- **Real-time Updates**: Live temperature, progress, and status display
+- **Temperature Gauges**: Corner-mounted hotend/bed indicators during printing
+
+### Connectivity & Configuration
+- **WiFi Integration**: Direct connection to Klipper via Moonraker API
+- **Web Configuration Portal**: Captive portal setup (framework ready)
+- **Theme Switching**: GPIO button for instant theme changes
+- **EEPROM Persistence**: Settings saved across power cycles
+
+### Environmental Monitoring
+- **Sensor Support**: BME280, DHT11/22, SHT30 sensors
+- **Chamber Monitoring**: Temperature, humidity, pressure tracking
+- **Automatic Detection**: Self-configuring sensor initialization
+- **Display Integration**: Environmental data on idle screen
+
+### Hardware Support
+- **ESP32-C3**: Optimized for the round display module
+- **I2C Sensors**: Standard I2C interface for environmental sensors
+- **GPIO Expansion**: Available pins for additional features
 
 ### Monitoring
 - Real-time temperature monitoring (hotend, bed, chamber)
@@ -246,27 +256,35 @@ We welcome contributions! See areas where you can help:
 
 ### Planned Releases
 
-**v1.2.0** - Touch & UI Improvements
-- Touch screen support
-- Enhanced animations
-- Multiple screen layouts
+**v1.3.0** - Advanced Features
+- Touch screen support (capacitive)
+- Print statistics and logging
+- OTA firmware updates
+- Audio feedback (buzzer)
+- Custom screen layouts
 
-**v1.3.0** - Web Configuration
-- Captive portal setup
-- OTA updates
-- Web-based settings
+**v1.4.0** - Ecosystem Expansion
+- Plugin architecture
+- Third-party sensor support
+- Advanced animations
+- Performance monitoring
+- Multi-language support
 
-**v2.0.0** - Advanced Features
-- WebSocket support
-- Menu system
+**v2.0.0** - Professional Features
+- WebSocket real-time updates
 - Direct printer control
-- Plugin support
+- Advanced diagnostics
+- Remote monitoring dashboard
+- Commercial-grade reliability
 
 ## Feedback
 
 Your feedback helps prioritize features!
 
-- ⭐ Star features you want
+- Star features you want
+- Comment on implementation ideas
+- Report bugs you encounter
+- Suggest improvements
 - 💬 Comment on implementation ideas
 - 🐛 Report bugs you encounter
 - 📝 Suggest improvements

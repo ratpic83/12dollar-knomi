@@ -176,14 +176,15 @@ Your Knomi Clone is now running!
 - Rolling eyes animation
 - "Ready" status
 - Current temperatures
+- **Environmental data** (if sensors connected)
+- **Theme selection** via GPIO 9 button
 
 **When Printing:**
-- Circular progress ring
-- Print percentage
-- Temperatures (hotend/bed)
-- Time remaining
-- Z height
-- Filename
+- HD progress ring with anti-aliasing
+- Print percentage with smooth updates
+- Temperatures (hotend/bed) in corner gauges
+- Time remaining and Z height
+- Filename display
 
 **When Paused:**
 - "PAUSED" text
@@ -206,6 +207,32 @@ Your Knomi Clone is now running!
 - Adjust brightness in `WifiConfig.h`
 - Change update intervals
 - Modify colors in `DisplayDriver.h`
+- **Add environmental sensors** (BME280/DHT)
+- **Connect theme button** to GPIO 9
+
+### Optional Enhancements
+
+#### 🌈 Theme Switching
+Connect a button to GPIO 9 for instant theme switching:
+- **Dark**: Classic black theme (default)
+- **Light**: Clean white theme
+- **Neon**: Cyberpunk magenta/cyan
+- **Minimal**: Subtle gray tones
+
+#### 🌡️ Environmental Monitoring
+Add chamber monitoring with affordable sensors:
+- **BME280**: Temp, humidity, pressure (~$5)
+- **DHT11/22**: Basic temp & humidity (~$3)
+- **SHT30**: High-precision sensors (~$8)
+
+Connect via I2C or digital pins - auto-detected on boot!
+
+#### 🔧 Web Configuration
+New devices start in configuration mode:
+1. WiFi network "Knomi-Config" appears
+2. Connect and visit `http://192.168.4.1`
+3. Configure WiFi and Klipper settings
+4. No code editing required!
 
 ### Troubleshooting
 - Check `docs/BUILDING.md` for detailed help

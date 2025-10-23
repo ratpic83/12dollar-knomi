@@ -72,30 +72,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Limited to 2.4GHz WiFi
 - No web configuration interface
 
-## [1.1.0] - 2025-10-23
-
-### Changed
-- **Migrated to PlatformIO**: Complete project restructure for PlatformIO
-  - Moved from `firmware/KnomiC3/` to `firmware/src/` structure
-  - Renamed `KnomiC3.ino` to `main.cpp`
-  - All TFT_eSPI configuration now in `platformio.ini` build flags
-  - Improved build system with automatic dependency management
-- **Updated Documentation**: All docs updated to reflect PlatformIO workflow
-  - README.md now recommends PlatformIO first
-  - PLATFORMIO_GUIDE.md updated with current structure
-  - PROJECT_SUMMARY.md reflects accurate metrics
-  - All file paths updated throughout documentation
+## [1.2.0] - 2025-10-23
 
 ### Added
-- `SimpleUI.h/cpp`: Simple UI implementation module
-- `LVGLDriver.h/cpp`: LVGL driver support (optional)
-- Better project organization with `include/` and `lib/` directories
+- **Theme System**: 4 beautiful color schemes (Dark, Light, Neon, Minimal)
+  - Live theme switching via GPIO 9 button
+  - EEPROM persistence of theme selection
+  - Theme-aware color palette throughout UI
+- **Environmental Monitoring**: Chamber sensor integration
+  - Support for BME280, DHT11/22, SHT30 sensors
+  - Real-time temperature, humidity, pressure display
+  - Automatic sensor detection and initialization
+  - Environmental data shown on idle screen
+- **Web Configuration Portal**: Framework for captive portal setup
+  - WiFi AP mode for first-time configuration
+  - HTML/CSS interface with form validation
+  - EEPROM storage of configuration
+  - Automatic device restart after setup
+- **HD Graphics Enhancements**:
+  - Anti-aliased progress rings with 3D depth effects
+  - Smooth sinusoidal animations for eye movements
+  - Temperature gauges positioned in screen corners
+  - Enhanced visual effects and transitions
 
 ### Improved
-- Easier setup process with PlatformIO
-- Better IDE integration (VS Code)
-- Automatic library management
-- Cleaner build configuration
+- **UI/UX**: Professional polish with theme support
+- **Performance**: Optimized sensor reading with caching
+- **Documentation**: Comprehensive guides for all features
+- **Build System**: Additional sensor libraries in PlatformIO
+
+### Technical Details
+- Added `Theme.h/cpp` for color management
+- Added `Environmental.h/cpp` for sensor integration
+- Added `WebConfig.h/cpp` for web portal functionality
+- Enhanced `DisplayDriver` and `UIManager` with theme support
+- Extended `PrinterStatus` with environmental data fields
 
 ## [Unreleased]
 
@@ -143,6 +154,7 @@ See CONTRIBUTING.md for guidelines on submitting changes.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.2.0 | 2025-10-23 | Theme system, environmental sensors, web portal, HD graphics |
 | 1.1.0 | 2025-10-23 | PlatformIO migration, improved build system |
 | 1.0.0 | 2024-10-21 | Initial release, basic functionality |
 
