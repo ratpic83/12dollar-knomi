@@ -35,6 +35,13 @@ Last Updated: 2025-10-23
 - **EEPROM persistence** of settings
 - **No code editing** required for setup
 
+### Touch Screen Support
+- **FT6236 capacitive touch** controller integration
+- **Gesture recognition** (tap, swipe, double-tap)
+- **Visual touch feedback** with animated rings
+- **Theme switching** via touch anywhere on screen
+- **Touch zones framework** for interactive UI elements
+
 ---
 
 ## 📊 Technical Specifications
@@ -50,6 +57,7 @@ Last Updated: 2025-10-23
 - **Update Rate**: 1 Hz (configurable)
 - **API Latency**: 50-200ms
 - **Theme Switching**: Instant (no reboot)
+- **Touch Response**: <10ms
 - **Sensor Reading**: 30-second cached intervals
 
 ### Memory Expansion Options
@@ -66,3 +74,7 @@ Last Updated: 2025-10-23
 ✅ Theme-aware color palette throughout UI
 ✅ Environmental data display on idle screen
 ✅ Web portal configuration interface
+✅ Capacitive touch screen support with FT6236
+✅ Gesture recognition (tap, swipe, double-tap)
+✅ Visual touch feedback with animated rings
+✅ Touch-controlled theme switching
