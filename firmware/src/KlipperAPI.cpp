@@ -36,7 +36,8 @@ PrinterStatus KlipperAPI::getPrinterStatus() {
   status.bedTemp = 0;
   status.bedTarget = 0;
   status.chamberTemp = 0;
-  status.chamberTarget = 0;
+  status.chamberHumidity = 0;
+  status.chamberPressure = 0;
   status.printProgress = 0;
   status.fileName = "";
   status.printTime = 0;

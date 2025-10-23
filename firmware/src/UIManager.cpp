@@ -151,6 +151,18 @@ void UIManager::drawIdleScreen(PrinterStatus& status) {
   sprintf(tempStr, "%.0f/%.0f", status.hotendTemp, status.hotendTarget);
   display->setTextColor(display->getThemeColors().highlight);
   display->drawCenteredText(tempStr, 230, 1);
+  
+  // Draw environmental data if available
+  if (status.chamberTemp > 0 || status.chamberHumidity > 0) {
+    display->setTextColor(display->getThemeColors().secondary);
+    char envStr[32];
+    if (status.chamberHumidity > 0) {
+      sprintf(envStr, "%.1f°C %.0f%%", status.chamberTemp, status.chamberHumidity);
+    } else {
+      sprintf(envStr, "%.1f°C", status.chamberTemp);
+    }
+    display->drawCenteredText(envStr, 190, 1);
+  }
 }
 
 void UIManager::drawPrintingScreen(PrinterStatus& status) {

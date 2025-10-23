@@ -32,14 +32,17 @@ struct PrinterStatus {
   float hotendTarget;
   float bedTemp;
   float bedTarget;
-  float chamberTemp;
-  float chamberTarget;
   
   // Print progress
   uint8_t printProgress;
   String fileName;
   uint32_t printTime;
   uint32_t printTimeLeft;
+  
+  // Environmental data (optional sensors)
+  float chamberTemp;
+  float chamberHumidity;
+  float chamberPressure;
   
   // Position
   float posX;

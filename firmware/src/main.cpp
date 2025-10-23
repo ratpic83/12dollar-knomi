@@ -2,12 +2,14 @@
 #include "DisplayDriver.h"
 #include "UIManager.h"
 #include "KlipperAPI.h"
+#include "Environmental.h"
 #include "WifiConfig.h"
 
 // Global instances
 DisplayDriver display;
 UIManager ui;
 KlipperAPI api;
+EnvironmentalSensor envSensor;
 
 // Theme cycling button (GPIO 9 - can connect a button here)
 const int THEME_BUTTON_PIN = 9;
@@ -24,6 +26,13 @@ void setup() {
   // Initialize display
   display.init();
   ui.init(&display);
+
+  // Initialize environmental sensor (BME280 on I2C)
+  if (envSensor.begin(SENSOR_BME280, 0)) {
+    Serial.println("Environmental sensor initialized");
+  } else {
+    Serial.println("Environmental sensor not found");
+  }
 
   // Check if device is configured
   // webConfig.begin(); // Temporarily disabled for testing
@@ -79,12 +88,27 @@ void loop() {
     lastUpdate = millis();
 
     PrinterStatus status = api.getPrinterStatus();
+    
+    // Add environmental data
+    EnvironmentalData envData = envSensor.readData();
+    if (envData.valid) {
+      status.chamberTemp = envData.temperature;
+      status.chamberHumidity = envData.humidity;
+      status.chamberPressure = envData.pressure;
+    }
+    
     ui.updateStatus(status);
 
     // Debug output
-    Serial.printf("State: %d, Hotend: %.1f/%.1f, Bed: %.1f/%.1f\n",
+    Serial.printf("State: %d, Hotend: %.1f/%.1f, Bed: %.1f/%.1f",
                   status.state, status.hotendTemp, status.hotendTarget,
                   status.bedTemp, status.bedTarget);
+    
+    if (envData.valid) {
+      Serial.printf(", Chamber: %.1f°C %.1f%% %.1fhPa",
+                    status.chamberTemp, status.chamberHumidity, status.chamberPressure);
+    }
+    Serial.println();
   }
 
   // Update UI animations
