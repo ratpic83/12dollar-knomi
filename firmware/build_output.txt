@@ -1,0 +1,72 @@
+Processing esp32-c3-devkitm-1 (platform: espressif32; board: esp32-c3-devkitm-1; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-c3-devkitm-1.html
+PLATFORM: Espressif 32 (2023.6.2) > Espressif ESP32-C3-DevKitM-1
+HARDWARE: ESP32C3 160MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-builtin, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 2.0.9 
+ - tool-esptoolpy @ 1.40602.0 (4.6.2) 
+ - tool-mklittlefs @ 1.203.210628 (2.3) 
+ - tool-mkspiffs @ 2.230.0 (2.30) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 40 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- TFT_eSPI @ 2.5.43
+|-- ArduinoJson @ 6.21.5
+|-- lvgl @ 8.4.0
+|-- DHT sensor library @ 1.4.6
+|-- Adafruit BME280 Library @ 2.3.0
+|-- Adafruit SHT31 Library @ 2.2.2
+|-- WiFi @ 2.0.0
+|-- EEPROM @ 2.0.0
+|-- Wire @ 2.0.0
+|-- SPI @ 2.0.0
+|-- HTTPClient @ 2.0.0
+|-- DNSServer @ 2.0.0
+|-- WebServer @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32-c3-devkitm-1/src/UIManager.cpp.o
+Compiling .pio/build/esp32-c3-devkitm-1/src/WebConfig.cpp.o
+In file included from .pio/libdeps/esp32-c3-devkitm-1/TFT_eSPI/TFT_eSPI.h:99,
+                 from src/DisplayDriver.h:12,
+                 from src/UIManager.h:11,
+                 from src/UIManager.cpp:5:
+.pio/libdeps/esp32-c3-devkitm-1/TFT_eSPI/Processors/TFT_eSPI_ESP32_C3.h:11:3: warning: #warning >>>>------>> DMA is not supported on the ESP32 C3 (possible future update) [-Wcpp]
+  #warning >>>>------>> DMA is not supported on the ESP32 C3 (possible future update)
+   ^~~~~~~
+In file included from src/DisplayDriver.h:12,
+                 from src/UIManager.h:11,
+                 from src/UIManager.cpp:5:
+.pio/libdeps/esp32-c3-devkitm-1/TFT_eSPI/TFT_eSPI.h:973:8: warning: #warning >>>>------>> TOUCH_CS pin not defined, TFT_eSPI touch functions will not be available! [-Wcpp]
+       #warning >>>>------>> TOUCH_CS pin not defined, TFT_eSPI touch functions will not be available!
+        ^~~~~~~
+src/WebConfig.cpp: In member function 'String WebConfig::getHTML()':
+src/WebConfig.cpp:141:97: error: no matching function for call to 'WebConfig::createFormField(const char [13], const char [13], String, const char [7], const char [5])'
+   html += createFormField("Klipper Port", "klipper_port", String(KLIPPER_PORT), "number", "7125");
+                                                                                                 ^
+In file included from src/WebConfig.cpp:5:
+src/WebConfig.h:62:10: note: candidate: 'String WebConfig::createFormField(const char*, const char*, const char*, const char*, const char*)'
+   String createFormField(const char* label, const char* name, const char* value, const char* type = "text", const char* placeholder = "");
+          ^~~~~~~~~~~~~~~
+src/WebConfig.h:62:10: note:   no known conversion for argument 3 from 'String' to 'const char*'
+Compiling .pio/build/esp32-c3-devkitm-1/libdb9/lvgl/draw/sw/lv_draw_sw_letter.c.o
+Compiling .pio/build/esp32-c3-devkitm-1/libdb9/lvgl/draw/sw/lv_draw_sw_line.c.o
+Compiling .pio/build/esp32-c3-devkitm-1/libdb9/lvgl/draw/sw/lv_draw_sw_polygon.c.o
+Compiling .pio/build/esp32-c3-devkitm-1/libdb9/lvgl/draw/sw/lv_draw_sw_rect.c.o
+Compiling .pio/build/esp32-c3-devkitm-1/libdb9/lvgl/draw/sw/lv_draw_sw_transform.c.o
+*** [.pio/build/esp32-c3-devkitm-1/src/WebConfig.cpp.o] Error 1
+Compiling .pio/build/esp32-c3-devkitm-1/libdb9/lvgl/draw/swm341_dma2d/lv_gpu_swm341_dma2d.c.o
+src/UIManager.cpp:9:32: error: 'const long unsigned int UIManager::TOUCH_FEEDBACK_DURATION' is not a static data member of 'class UIManager'
+ const unsigned long UIManager::TOUCH_FEEDBACK_DURATION = 200;
+                                ^~~~~~~~~~~~~~~~~~~~~~~
+src/UIManager.cpp: In member function 'void UIManager::update()':
+src/UIManager.cpp:330:41: error: 'TOUCH_FEEDBACK_DURATION' was not declared in this scope
+   if (currentTime - lastTouchFeedback < TOUCH_FEEDBACK_DURATION) {
+                                         ^~~~~~~~~~~~~~~~~~~~~~~
+*** [.pio/build/esp32-c3-devkitm-1/src/UIManager.cpp.o] Error 1
+========================== [FAILED] Took 2.46 seconds ==========================

@@ -138,7 +138,7 @@ String WebConfig::getHTML() {
   html += "<div class='section'>";
   html += "<h2>🖨️ Klipper Settings</h2>";
   html += createFormField("Klipper IP Address", "klipper_ip", KLIPPER_IP, "text", "192.168.1.100");
-  html += createFormField("Klipper Port", "klipper_port", String(KLIPPER_PORT), "number", "7125");
+  html += createFormField("Klipper Port", "klipper_port", String(KLIPPER_PORT).c_str(), "number", "7125");
   html += "</div>";
   
   html += "<div class='section'>";

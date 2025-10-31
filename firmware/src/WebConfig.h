@@ -26,6 +26,10 @@ public:
   // Check if configuration is complete
   bool isConfigured();
   
+  // Configuration persistence
+  void saveConfiguration();
+  void loadConfiguration();
+  
   // Get current configuration
   String getSSID() { return configuredSSID; }
   String getPassword() { return configuredPassword; }

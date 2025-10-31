@@ -9,7 +9,8 @@ UIManager::UIManager() :
   display(nullptr),
   currentScreen(SCREEN_BOOT),
   lastAnimationUpdate(0),
-  animationFrame(0) {
+  animationFrame(0),
+  lastTouchFeedback(0) {
 }
 
 void UIManager::init(DisplayDriver* disp) {
@@ -378,10 +379,6 @@ String UIManager::formatTemperature(float temp, float target) {
   }
   return String(tempStr);
 }
-
-// Touch feedback animation
-static unsigned long lastTouchFeedback = 0;
-static const unsigned long TOUCH_FEEDBACK_DURATION = 200; // 200ms feedback
 
 void UIManager::handleTouchEvent(TouchEvent event, TouchPoint point) {
   // Handle different touch events

@@ -56,6 +56,10 @@ private:
   int animationFrame;
   PrinterStatus lastStatus;
   
+  // Touch feedback
+  unsigned long lastTouchFeedback;
+  static constexpr unsigned long TOUCH_FEEDBACK_DURATION = 200;
+
   // Screen drawing functions
   void drawIdleScreen(PrinterStatus& status);
   void drawPrintingScreen(PrinterStatus& status);
