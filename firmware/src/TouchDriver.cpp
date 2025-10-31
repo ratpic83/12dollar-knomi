@@ -19,6 +19,15 @@
 #define FT6236_REG_P1_WEIGHT 0x07
 #define FT6236_REG_P1_MISC 0x08
 
+// CST816D I2C registers (used in ESP32-2424S012C)
+#define CST816D_ADDR 0x15
+#define CST816D_REG_GESTURE 0x01
+#define CST816D_REG_POINTS 0x02
+#define CST816D_REG_XH 0x03
+#define CST816D_REG_XL 0x04
+#define CST816D_REG_YH 0x05
+#define CST816D_REG_YL 0x06
+
 // FT6236 touch point structure
 struct FT6236_TouchPoint {
   uint16_t x;
@@ -32,11 +41,13 @@ static FT6236_TouchPoint ft6236_touchPoint;
 TouchDriver::TouchDriver() :
   touchController(nullptr),
   currentEvent(TOUCH_NONE),
+  touchStartTime(0),
+  lastTouchTime(0),
   gesturesEnabled(true),
   swipeThreshold(50),
   tapThreshold(20),
   gestureInProgress(false),
-  zoneCount(0)
+  circleQuadrants(0)
 {
   currentPoint.x = 0;
   currentPoint.y = 0;
@@ -49,9 +60,23 @@ TouchDriver::TouchDriver() :
 }
 
 bool TouchDriver::begin(uint8_t sda, uint8_t scl, uint8_t rst, uint8_t intPin) {
-  // Try FT6236 first (most common for round displays)
-  if (initFT6236(sda, scl, rst, intPin)) {
-    Serial.println("Touch: FT6236 initialized");
+  // Initialize I2C
+  Wire.begin(sda, scl);
+  delay(50);
+  
+  // Try CST816D first (used in ESP32-2424S012C)
+  Wire.beginTransmission(CST816D_ADDR);
+  if (Wire.endTransmission() == 0) {
+    Serial.println("Touch: CST816D found at 0x15");
+    touchController = (void*)CST816D_ADDR;
+    return true;
+  }
+  
+  // Try FT6236 as fallback
+  Wire.beginTransmission(FT6236_ADDR);
+  if (Wire.endTransmission() == 0) {
+    Serial.println("Touch: FT6236 found at 0x38");
+    touchController = (void*)FT6236_ADDR;
     return true;
   }
   
@@ -78,14 +103,19 @@ bool TouchDriver::initFT6236(uint8_t sda, uint8_t scl, uint8_t rst, uint8_t intP
 }
 
 void TouchDriver::update() {
-  // Read touch data from FT6236 via I2C
-  Wire.beginTransmission(FT6236_ADDR);
-  Wire.write(FT6236_REG_TD_STATUS);
+  if (!touchController) return;
+  
+  uint8_t addr = (uint8_t)(uintptr_t)touchController;
+  uint8_t reg = (addr == CST816D_ADDR) ? CST816D_REG_POINTS : FT6236_REG_TD_STATUS;
+  
+  // Read touch data via I2C
+  Wire.beginTransmission(addr);
+  Wire.write(reg);
   if (Wire.endTransmission(false) != 0) {
     return; // I2C error
   }
   
-  if (Wire.requestFrom(FT6236_ADDR, 6) != 6) {
+  if (Wire.requestFrom(addr, (uint8_t)6) != 6) {
     return; // Not enough data
   }
   
@@ -99,7 +129,6 @@ void TouchDriver::update() {
     uint8_t yh = Wire.read();
     uint8_t yl = Wire.read();
     uint8_t weight = Wire.read();
-    uint8_t misc = Wire.read();
     
     // Extract coordinates (12-bit values)
     uint16_t x = ((xh & 0x0F) << 8) | xl;
@@ -117,6 +146,8 @@ void TouchDriver::update() {
       if (!lastPoint.valid) {
         currentEvent = TOUCH_DOWN;
         touchStartTime = millis();
+        touchStartPoint = currentPoint;  // Store start position for swipe detection
+        circleQuadrants = 0;  // Reset circle tracking
         gestureInProgress = true;
       } else {
         // Check if it's a significant move
@@ -125,6 +156,21 @@ void TouchDriver::update() {
         
         if (deltaX > 5 || deltaY > 5) {
           currentEvent = TOUCH_MOVE;
+          
+          // Track quadrants for circle gesture (relative to screen center)
+          int16_t centerX = 120;  // Screen center
+          int16_t centerY = 120;
+          int16_t relX = currentPoint.x - centerX;
+          int16_t relY = currentPoint.y - centerY;
+          
+          // Determine quadrant (0=top-right, 1=top-left, 2=bottom-left, 3=bottom-right)
+          uint8_t quadrant = 0;
+          if (relX >= 0 && relY < 0) quadrant = 0;  // Top-right
+          else if (relX < 0 && relY < 0) quadrant = 1;  // Top-left
+          else if (relX < 0 && relY >= 0) quadrant = 2;  // Bottom-left
+          else if (relX >= 0 && relY >= 0) quadrant = 3;  // Bottom-right
+          
+          circleQuadrants |= (1 << quadrant);  // Mark this quadrant as visited
         } else {
           currentEvent = TOUCH_NONE; // Minor movement, no event
         }
@@ -153,8 +199,10 @@ void TouchDriver::update() {
     // No touches detected
     if (lastPoint.valid) {
       // Touch was just released
+      Serial.println("Touch released!");
       if (gesturesEnabled) {
         currentEvent = detectGesture();
+        Serial.printf("Gesture event: %d\n", currentEvent);
       } else {
         currentEvent = TOUCH_UP;
       }
@@ -165,6 +213,7 @@ void TouchDriver::update() {
     }
     
     currentPoint.valid = false;
+    lastPoint.valid = false;
   }
 }
 
@@ -185,47 +234,6 @@ bool TouchDriver::isTouched() {
   return currentPoint.valid;
 }
 
-void TouchDriver::addZone(uint8_t id, int16_t x, int16_t y, int16_t width, int16_t height) {
-  if (zoneCount >= MAX_ZONES) return;
-  
-  zones[zoneCount].id = id;
-  zones[zoneCount].x = x;
-  zones[zoneCount].y = y;
-  zones[zoneCount].width = width;
-  zones[zoneCount].height = height;
-  zones[zoneCount].active = true;
-  
-  zoneCount++;
-}
-
-void TouchDriver::removeZone(uint8_t id) {
-  for (uint8_t i = 0; i < zoneCount; i++) {
-    if (zones[i].id == id) {
-      // Shift remaining zones
-      for (uint8_t j = i; j < zoneCount - 1; j++) {
-        zones[j] = zones[j + 1];
-      }
-      zoneCount--;
-      break;
-    }
-  }
-}
-
-void TouchDriver::clearZones() {
-  zoneCount = 0;
-}
-
-uint8_t TouchDriver::getTouchedZone() {
-  if (!currentPoint.valid) return 0;
-  
-  for (uint8_t i = 0; i < zoneCount; i++) {
-    if (zones[i].active && isPointInZone(currentPoint, zones[i])) {
-      return zones[i].id;
-    }
-  }
-  
-  return 0; // No zone touched
-}
 
 void TouchDriver::enableGestures(bool enable) {
   gesturesEnabled = enable;
@@ -244,33 +252,42 @@ TouchEvent TouchDriver::detectGesture() {
     return TOUCH_UP;
   }
   
-  unsigned long touchDuration = lastTouchTime - touchStartTime;
-  int16_t deltaX = currentPoint.x - lastPoint.x;
-  int16_t deltaY = currentPoint.y - lastPoint.y;
+  unsigned long touchDuration = millis() - touchStartTime;
   
-  // Check for tap (short duration, small movement)
-  if (touchDuration < 500 && abs(deltaX) < tapThreshold && abs(deltaY) < tapThreshold) {
-    // Could implement double-tap detection here
-    return TOUCH_GESTURE_TAP;
+  // Calculate total movement from start to current position
+  int16_t deltaX = currentPoint.x - touchStartPoint.x;
+  int16_t deltaY = currentPoint.y - touchStartPoint.y;
+  
+  Serial.printf("Gesture: duration=%lu, deltaX=%d, deltaY=%d, quadrants=0x%X\n", touchDuration, deltaX, deltaY, circleQuadrants);
+  
+  // Check for circle gesture (all 4 quadrants visited)
+  if (circleQuadrants == 0x0F) {  // 0x0F = 0b1111 = all 4 quadrants
+    Serial.println("Circle gesture detected!");
+    return TOUCH_GESTURE_CIRCLE;
   }
   
   // Check for swipe (significant movement)
   if (abs(deltaX) > swipeThreshold || abs(deltaY) > swipeThreshold) {
-    if (abs(deltaX) > abs(deltaY)) {
-      // Horizontal swipe
-      return (deltaX > 0) ? TOUCH_GESTURE_SWIPE_RIGHT : TOUCH_GESTURE_SWIPE_LEFT;
-    } else {
+    if (abs(deltaY) > abs(deltaX)) {
       // Vertical swipe
-      return (deltaY > 0) ? TOUCH_GESTURE_SWIPE_DOWN : TOUCH_GESTURE_SWIPE_UP;
+      TouchEvent result = (deltaY > 0) ? TOUCH_GESTURE_SWIPE_DOWN : TOUCH_GESTURE_SWIPE_UP;
+      Serial.printf("Swipe detected: %s\n", (result == TOUCH_GESTURE_SWIPE_UP) ? "UP" : "DOWN");
+      return result;
+    } else {
+      // Horizontal swipe
+      TouchEvent result = (deltaX > 0) ? TOUCH_GESTURE_SWIPE_RIGHT : TOUCH_GESTURE_SWIPE_LEFT;
+      Serial.printf("Swipe detected: %s\n", (result == TOUCH_GESTURE_SWIPE_LEFT) ? "LEFT" : "RIGHT");
+      return result;
     }
   }
   
+  // Check for tap (short duration, small movement)
+  if (touchDuration < 500) {
+    Serial.printf("Tap detected! Duration: %lu ms\n", touchDuration);
+    return TOUCH_GESTURE_TAP;
+  }
+  
   return TOUCH_UP;
-}
-
-bool TouchDriver::isPointInZone(TouchPoint point, TouchZone zone) {
-  return (point.x >= zone.x && point.x < zone.x + zone.width &&
-          point.y >= zone.y && point.y < zone.y + zone.height);
 }
 
 void TouchDriver::printTouchInfo() {

@@ -137,90 +137,62 @@ bool KlipperAPI::makeRequest(const char* endpoint, JsonDocument& doc) {
     Serial.println(endpoint);
   #endif
   
-  // Use WiFiClient directly for more control
-  WiFiClient client;
-  client.setTimeout(5000);  // Set socket timeout
+  // Use HTTPClient for better timeout handling
+  HTTPClient http;
+  http.setTimeout(3000);  // 3 second timeout
+  http.setConnectTimeout(3000);  // 3 second connection timeout
   
-  if (!client.connect(klipperIP, klipperPort)) {
+  String url = baseURL + String(endpoint);
+  
+  #if DEBUG_API
+    Serial.print("URL: ");
+    Serial.println(url);
+  #endif
+  
+  if (!http.begin(url)) {
     #if DEBUG_API
-      Serial.println("Connection failed!");
+      Serial.println("HTTP begin failed!");
     #endif
     return false;
   }
   
-  #if DEBUG_API
-    Serial.println("TCP connected! Sending HTTP request...");
-  #endif
+  http.addHeader("Accept", "application/json");
   
-  delay(50);  // Small delay to let connection stabilize
-  
-  // Send HTTP GET request manually
-  client.print("GET ");
-  client.print(endpoint);
-  client.println(" HTTP/1.1");
-  client.print("Host: ");
-  client.print(klipperIP);
-  client.print(":");
-  client.println(klipperPort);
-  client.println("User-Agent: KnomiClone/1.0");
-  client.println("Accept: application/json");
-  client.println("Connection: close");
-  client.println();
-  
-  // Wait for response with timeout
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 5000) {  // Increased to 5 seconds
-      #if DEBUG_API
-        Serial.println("Request timeout!");
-      #endif
-      client.stop();
-      return false;
-    }
-    yield();  // Let WiFi stack process
-    delay(10);
-  }
-  
-  // Skip HTTP headers
-  while (client.available()) {
-    String line = client.readStringUntil('\n');
-    if (line == "\r") break;
-  }
-  
-  // Read JSON body
-  String payload = client.readString();
-  client.stop();
-  
-  #if DEBUG_API
-    Serial.print("Response length: ");
-    Serial.println(payload.length());
-  #endif
-  
-  int httpCode = 200;
+  int httpCode = http.GET();
   
   #if DEBUG_API
     Serial.print("HTTP Code: ");
     Serial.println(httpCode);
   #endif
   
-  if (httpCode == HTTP_CODE_OK) {
-    DeserializationError error = deserializeJson(doc, payload);
-    
-    if (error) {
-      #if DEBUG_API
+  if (httpCode != HTTP_CODE_OK) {
+    #if DEBUG_API
+      Serial.println("HTTP request failed!");
+    #endif
+    http.end();
+    return false;
+  }
+  
+  String payload = http.getString();
+  http.end();
+  
+  #if DEBUG_API
+    Serial.print("Response length: ");
+    Serial.println(payload.length());
+  #endif
+  
+  // Parse JSON
+  DeserializationError error = deserializeJson(doc, payload);
+  
+  if (error) {
+    #if DEBUG_API
       Serial.print("JSON parse error: ");
       Serial.println(error.c_str());
-      #endif
-      return false;
-    }
-    
-    return true;
-  } else {
-    #if DEBUG_API
-    Serial.printf("HTTP request failed: %d\n", httpCode);
     #endif
     return false;
   }
+  
+  return true;
 }
 
 PrinterState KlipperAPI::parseState(const char* stateStr) {

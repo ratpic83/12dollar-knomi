@@ -21,7 +21,8 @@ enum TouchEvent {
   TOUCH_GESTURE_SWIPE_UP,
   TOUCH_GESTURE_SWIPE_DOWN,
   TOUCH_GESTURE_SWIPE_LEFT,
-  TOUCH_GESTURE_SWIPE_RIGHT
+  TOUCH_GESTURE_SWIPE_RIGHT,
+  TOUCH_GESTURE_CIRCLE
 };
 
 // Touch point structure
@@ -30,14 +31,6 @@ struct TouchPoint {
   int16_t y;
   uint16_t pressure;
   bool valid;
-};
-
-// Touch zone for UI elements
-struct TouchZone {
-  int16_t x, y;           // Top-left corner
-  int16_t width, height;  // Size
-  uint8_t id;             // Zone identifier
-  bool active;            // Zone is active
 };
 
 class TouchDriver {
@@ -59,13 +52,6 @@ public:
   // Check if touch is detected
   bool isTouched();
   
-  // Define touch zones for UI
-  void addZone(uint8_t id, int16_t x, int16_t y, int16_t width, int16_t height);
-  void removeZone(uint8_t id);
-  void clearZones();
-  
-  // Check if touch is within a zone
-  uint8_t getTouchedZone();
   
   // Enable/disable gesture recognition
   void enableGestures(bool enable);
@@ -85,6 +71,7 @@ private:
   TouchEvent currentEvent;
   TouchPoint currentPoint;
   TouchPoint lastPoint;
+  TouchPoint touchStartPoint;  // Store where touch began for swipe detection
   unsigned long touchStartTime;
   unsigned long lastTouchTime;
   
@@ -94,16 +81,13 @@ private:
   uint16_t tapThreshold;
   bool gestureInProgress;
   
-  // Touch zones
-  static const uint8_t MAX_ZONES = 10;
-  TouchZone zones[MAX_ZONES];
-  uint8_t zoneCount;
+  // Circle gesture tracking
+  uint8_t circleQuadrants;  // Bitmask of visited quadrants (bit 0-3 for quadrants 1-4)
   
   // Private methods
   bool initFT6236(uint8_t sda, uint8_t scl, uint8_t rst, uint8_t intPin);
   void processGestures();
   TouchEvent detectGesture();
-  bool isPointInZone(TouchPoint point, TouchZone zone);
 };
 
 #endif // TOUCH_DRIVER_H

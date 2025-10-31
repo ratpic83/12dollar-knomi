@@ -9,10 +9,15 @@ DisplayDriver::DisplayDriver() : currentBrightness(255) {
 }
 
 void DisplayDriver::init() {
+  // Configure PWM for backlight control on GPIO3
+  // ledcSetup(channel, freq, resolution_bits)
+  ledcSetup(0, 5000, 8);  // Channel 0, 5kHz, 8-bit (0-255)
+  ledcAttachPin(3, 0);    // Attach GPIO3 to channel 0
+  
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(COLOR_BLACK);
-  setBrightness(200);
+  setBrightness(200);  // This will now use PWM
   
   // Initialize theme system
   themeManager.init();
@@ -20,9 +25,9 @@ void DisplayDriver::init() {
 
 void DisplayDriver::setBrightness(uint8_t brightness) {
   currentBrightness = brightness;
-  // Note: Brightness control depends on hardware
-  // Some displays use PWM on backlight pin
-  // This is a placeholder - adjust for your hardware
+  // Control backlight with PWM on GPIO3
+  // ESP32 ledcWrite uses 0-255 range, same as our brightness
+  ledcWrite(0, brightness);  // Channel 0, value 0-255
 }
 
 void DisplayDriver::clear() {
@@ -231,7 +236,8 @@ void DisplayDriver::drawEye(int16_t x, int16_t y, int16_t size, int16_t pupilX, 
 }
 
 void DisplayDriver::drawRollingEyes(int16_t frame) {
-  clear();
+  // Don't clear here - clearing is handled by UIManager when screen changes
+  // This prevents flickering during animation
   
   // Calculate pupil position with smooth easing (sinusoidal)
   float t = (frame % 360) / 360.0; // 0 to 1 over 360 frames

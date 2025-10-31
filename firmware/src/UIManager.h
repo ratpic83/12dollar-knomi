@@ -15,15 +15,11 @@
 // Screen types
 enum ScreenType {
   SCREEN_BOOT,
-  SCREEN_CONNECTING,
-  SCREEN_CONNECTED,
   SCREEN_IDLE,
   SCREEN_PRINTING,
   SCREEN_PAUSED,
   SCREEN_COMPLETE,
-  SCREEN_ERROR,
-  SCREEN_WIFI_ERROR,
-  SCREEN_KLIPPER_ERROR
+  SCREEN_ERROR
 };
 
 class UIManager {
@@ -35,10 +31,6 @@ public:
   
   // Screen management
   void showBootScreen();
-  void showConnectingScreen();
-  void showConnectedScreen();
-  void showWiFiError();
-  void showKlipperError();
   
   // Update with printer status
   void updateStatus(PrinterStatus& status);
@@ -59,6 +51,7 @@ private:
   // Touch feedback
   unsigned long lastTouchFeedback;
   static constexpr unsigned long TOUCH_FEEDBACK_DURATION = 200;
+  bool manualMode;  // True when user manually swipes to a screen
 
   // Screen drawing functions
   void drawIdleScreen(PrinterStatus& status);

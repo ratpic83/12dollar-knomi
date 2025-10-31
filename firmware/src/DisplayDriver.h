@@ -40,6 +40,7 @@ public:
   // Initialization
   void init();
   void setBrightness(uint8_t brightness);
+  uint8_t getBrightness() const { return currentBrightness; }
   
   // Theme management
   void setTheme(ThemeType theme) { themeManager.setTheme(theme); }
@@ -92,6 +93,9 @@ public:
   
   // Get display object for advanced operations
   TFT_eSPI* getTFT() { return &tft; }
+  
+  // Color conversion
+  uint16_t color565(uint8_t r, uint8_t g, uint8_t b) { return tft.color565(r, g, b); }
   
 private:
   TFT_eSPI tft;

@@ -7,10 +7,12 @@
 
 UIManager::UIManager() : 
   display(nullptr),
-  currentScreen(SCREEN_BOOT),
+  currentScreen(SCREEN_IDLE),
   lastAnimationUpdate(0),
   animationFrame(0),
-  lastTouchFeedback(0) {
+  lastTouchFeedback(0),
+  manualMode(false)
+{
 }
 
 void UIManager::init(DisplayDriver* disp) {
@@ -23,77 +25,75 @@ void UIManager::showBootScreen() {
   currentScreen = SCREEN_BOOT;
   display->clear();
   
-  // Draw logo/title
-  display->setTextColor(display->getThemeColors().accent);
-  display->drawCenteredText("KNOMI", 80, 3);
+  // Draw rainbow arc at top (Electric Callboy style)
+  int16_t centerX = 120;
+  int16_t centerY = 120;
+  int16_t radius = 90;
+  
+  // Rainbow colors
+  uint16_t rainbowColors[] = {
+    display->color565(255, 0, 0),     // Red
+    display->color565(255, 127, 0),   // Orange
+    display->color565(255, 255, 0),   // Yellow
+    display->color565(0, 255, 0),     // Green
+    display->color565(0, 0, 255),     // Blue
+    display->color565(75, 0, 130),    // Indigo
+    display->color565(148, 0, 211)    // Violet
+  };
+  
+  // Draw rainbow arcs (smaller for boot screen)
+  for (int i = 0; i < 7; i++) {
+    for (int angle = 200; angle <= 340; angle += 3) {
+      float rad = angle * PI / 180.0;
+      int16_t x1 = centerX + (radius - i * 3) * cos(rad);
+      int16_t y1 = centerY + (radius - i * 3) * sin(rad);
+      int16_t x2 = centerX + (radius - i * 3 - 2) * cos(rad);
+      int16_t y2 = centerY + (radius - i * 3 - 2) * sin(rad);
+      display->drawLine(x1, y1, x2, y2, rainbowColors[i]);
+    }
+  }
+  
+  // Draw title text
   display->setTextColor(display->getThemeColors().text);
-  display->drawCenteredText("Clone", 110, 2);
+  display->drawCenteredText("PaWe", 130, 3);
+  display->drawCenteredText("i-print", 155, 2);
   
   // Draw version
   display->setTextColor(display->getThemeColors().secondary);
-  display->drawCenteredText("v1.1", 140, 1);
+  display->drawCenteredText("v1.1", 185, 1);
   
   // Draw loading indicator
-  display->drawCircle(SCREEN_WIDTH/2, 180, 10, display->getThemeColors().accent);
-}
-
-void UIManager::showConnectingScreen() {
-  currentScreen = SCREEN_CONNECTING;
-  display->clear();
-  
-  display->setTextColor(display->getThemeColors().text);
-  display->drawCenteredText("Connecting", 100, 2);
-  display->setTextColor(display->getThemeColors().secondary);
-  display->drawCenteredText("to WiFi...", 130, 1);
-  
-  // Draw WiFi icon
-  display->drawWiFiIcon(SCREEN_WIDTH/2, 170, display->getThemeColors().accent, 1);
-}
-
-void UIManager::showConnectedScreen() {
-  currentScreen = SCREEN_CONNECTED;
-  display->clear();
-  
-  display->setTextColor(display->getThemeColors().success);
-  display->drawCenteredText("Connected!", 110, 2);
-  
-  // Draw checkmark
-  display->drawCheckIcon(SCREEN_WIDTH/2, 160, display->getThemeColors().success);
-}
-
-void UIManager::showWiFiError() {
-  if (currentScreen == SCREEN_WIFI_ERROR) return;
-  
-  currentScreen = SCREEN_WIFI_ERROR;
-  display->clear();
-  
-  display->setTextColor(display->getThemeColors().error);
-  display->drawCenteredText("WiFi Error", 100, 2);
-  display->setTextColor(display->getThemeColors().secondary);
-  display->drawCenteredText("Check config", 130, 1);
-  
-  // Draw error icon
-  display->drawErrorIcon(SCREEN_WIDTH/2, 170, display->getThemeColors().error);
-}
-
-void UIManager::showKlipperError() {
-  if (currentScreen == SCREEN_KLIPPER_ERROR) return;
-  
-  currentScreen = SCREEN_KLIPPER_ERROR;
-  display->clear();
-  
-  display->setTextColor(display->getThemeColors().error);
-  display->drawCenteredText("Klipper", 90, 2);
-  display->drawCenteredText("Offline", 120, 2);
-  display->setTextColor(display->getThemeColors().secondary);
-  display->drawCenteredText("Reconnecting...", 150, 1);
-  
-  // Draw printer icon
-  display->drawPrinterIcon(SCREEN_WIDTH/2 - 15, 175, display->getThemeColors().error);
+  display->drawCircle(SCREEN_WIDTH/2, 210, 8, display->getThemeColors().accent);
 }
 
 void UIManager::updateStatus(PrinterStatus& status) {
-  // Determine which screen to show based on state
+  // Skip automatic screen switching if user is in manual mode
+  if (manualMode) {
+    // Just update the data on current screen without switching
+    if (shouldRedraw(status)) {
+      switch (currentScreen) {
+        case SCREEN_IDLE:
+          drawIdleScreen(status);
+          break;
+        case SCREEN_PRINTING:
+          drawPrintingScreen(status);
+          break;
+        case SCREEN_PAUSED:
+          drawPausedScreen(status);
+          break;
+        case SCREEN_COMPLETE:
+          drawCompleteScreen(status);
+          break;
+        case SCREEN_ERROR:
+          drawErrorScreen();
+          break;
+      }
+    }
+    lastStatus = status;
+    return;
+  }
+  
+  // Automatic mode: Determine which screen to show based on state
   ScreenType newScreen = currentScreen;
   
   if (status.state == STATE_IDLE || status.state == STATE_STANDBY) {
@@ -110,6 +110,10 @@ void UIManager::updateStatus(PrinterStatus& status) {
   
   // Redraw if screen changed or significant data changed
   if (newScreen != currentScreen || shouldRedraw(status)) {
+    // Clear screen only when switching screens
+    if (newScreen != currentScreen) {
+      display->clear();
+    }
     currentScreen = newScreen;
     
     switch (currentScreen) {
@@ -138,7 +142,8 @@ void UIManager::updateStatus(PrinterStatus& status) {
 }
 
 void UIManager::drawIdleScreen(PrinterStatus& status) {
-  display->clear();
+  // Only clear on screen change (handled by updateStatus)
+  // Don't clear here to prevent flicker during animation
   
   // Draw rolling eyes animation
   display->drawRollingEyes(animationFrame);
@@ -167,7 +172,7 @@ void UIManager::drawIdleScreen(PrinterStatus& status) {
 }
 
 void UIManager::drawPrintingScreen(PrinterStatus& status) {
-  display->clear();
+  // Only clear on screen change (handled by updateStatus)
   
   // Draw progress ring with enhanced visuals
   drawProgressCircle(status.printProgress);
@@ -206,7 +211,7 @@ void UIManager::drawPrintingScreen(PrinterStatus& status) {
 }
 
 void UIManager::drawPausedScreen(PrinterStatus& status) {
-  display->clear();
+  // Only clear on screen change (handled by updateStatus)
   
   // Draw progress ring (dimmed)
   drawProgressCircle(status.printProgress);
@@ -384,10 +389,12 @@ void UIManager::handleTouchEvent(TouchEvent event, TouchPoint point) {
   // Handle different touch events
   switch (event) {
     case TOUCH_GESTURE_TAP:
-      // Handle tap gesture - theme switching
+      // Handle tap gesture - theme switching (also exits manual mode)
+      manualMode = false;  // Exit manual mode on tap
       if (currentScreen == SCREEN_IDLE || currentScreen == SCREEN_PRINTING) {
         display->nextTheme();
-        // Redraw current screen to show new theme
+        // Clear screen and redraw to show new theme
+        display->clear();
         if (currentScreen == SCREEN_IDLE) {
           drawIdleScreen(lastStatus);
         } else if (currentScreen == SCREEN_PRINTING) {
@@ -397,25 +404,214 @@ void UIManager::handleTouchEvent(TouchEvent event, TouchPoint point) {
       }
       break;
       
-    case TOUCH_GESTURE_DOUBLE_TAP:
-      // Handle double tap - could be used for other functions
-      Serial.println("Touch: Double tap detected");
+    case TOUCH_GESTURE_CIRCLE:
+      // Handle circle gesture - show VIVA LA ELTON JOHN logo
+      {
+        Serial.println("Touch: Circle gesture - showing VIVA LA ELTON JOHN!");
+        display->clear();
+        
+        // Draw rainbow arc at top
+        int16_t centerX = 120;
+        int16_t centerY = 120;
+        int16_t radius = 100;
+        
+        // Rainbow colors (7 colors)
+        uint16_t rainbowColors[] = {
+          display->color565(255, 0, 0),     // Red
+          display->color565(255, 127, 0),   // Orange
+          display->color565(255, 255, 0),   // Yellow
+          display->color565(0, 255, 0),     // Green
+          display->color565(0, 0, 255),     // Blue
+          display->color565(75, 0, 130),    // Indigo
+          display->color565(148, 0, 211)    // Violet
+        };
+        
+        // Draw rainbow arcs
+        for (int i = 0; i < 7; i++) {
+          for (int angle = 180; angle <= 360; angle += 2) {
+            float rad = angle * PI / 180.0;
+            int16_t x1 = centerX + (radius - i * 4) * cos(rad);
+            int16_t y1 = centerY + (radius - i * 4) * sin(rad);
+            int16_t x2 = centerX + (radius - i * 4 - 3) * cos(rad);
+            int16_t y2 = centerY + (radius - i * 4 - 3) * sin(rad);
+            display->drawLine(x1, y1, x2, y2, rainbowColors[i]);
+          }
+        }
+        
+        // Draw text
+        display->setTextColor(display->getThemeColors().text);
+        display->drawCenteredText("VIVA LA", 140, 3);
+        display->drawCenteredText("ELTON JOHN", 170, 3);
+        
+        // Show for 3 seconds
+        delay(3000);
+        
+        // Clear and redraw current screen
+        display->clear();
+        switch (currentScreen) {
+          case SCREEN_IDLE:
+            drawIdleScreen(lastStatus);
+            break;
+          case SCREEN_PRINTING:
+            drawPrintingScreen(lastStatus);
+            break;
+          case SCREEN_PAUSED:
+            drawPausedScreen(lastStatus);
+            break;
+          case SCREEN_COMPLETE:
+            drawCompleteScreen(lastStatus);
+            break;
+          default:
+            break;
+        }
+      }
       break;
       
     case TOUCH_GESTURE_SWIPE_LEFT:
+      // Swipe left - next display mode
+      {
+        // Cycle through display modes: IDLE -> PRINTING -> PAUSED -> COMPLETE -> back to IDLE
+        ScreenType nextScreen = currentScreen;
+        switch (currentScreen) {
+          case SCREEN_IDLE:
+            nextScreen = SCREEN_PRINTING;
+            break;
+          case SCREEN_PRINTING:
+            nextScreen = SCREEN_PAUSED;
+            break;
+          case SCREEN_PAUSED:
+            nextScreen = SCREEN_COMPLETE;
+            break;
+          case SCREEN_COMPLETE:
+          case SCREEN_ERROR:
+          default:
+            nextScreen = SCREEN_IDLE;
+            break;
+        }
+        
+        currentScreen = nextScreen;
+        display->clear();
+        
+        // Draw the new screen
+        switch (currentScreen) {
+          case SCREEN_IDLE:
+            drawIdleScreen(lastStatus);
+            break;
+          case SCREEN_PRINTING:
+            drawPrintingScreen(lastStatus);
+            break;
+          case SCREEN_PAUSED:
+            drawPausedScreen(lastStatus);
+            break;
+          case SCREEN_COMPLETE:
+            drawCompleteScreen(lastStatus);
+            break;
+          default:
+            break;
+        }
+        
+        manualMode = true;  // Enter manual mode
+        Serial.printf("Touch: Swipe left - Screen mode: %d (manual)\n", currentScreen);
+      }
+      break;
+      
     case TOUCH_GESTURE_SWIPE_RIGHT:
-      // Handle swipe gestures - could navigate between screens
-      Serial.println("Touch: Swipe gesture detected");
+      // Swipe right - previous display mode
+      {
+        ScreenType prevScreen = currentScreen;
+        switch (currentScreen) {
+          case SCREEN_IDLE:
+            prevScreen = SCREEN_COMPLETE;
+            break;
+          case SCREEN_PRINTING:
+            prevScreen = SCREEN_IDLE;
+            break;
+          case SCREEN_PAUSED:
+            prevScreen = SCREEN_PRINTING;
+            break;
+          case SCREEN_COMPLETE:
+          case SCREEN_ERROR:
+          default:
+            prevScreen = SCREEN_PAUSED;
+            break;
+        }
+        
+        currentScreen = prevScreen;
+        display->clear();
+        
+        // Draw the new screen
+        switch (currentScreen) {
+          case SCREEN_IDLE:
+            drawIdleScreen(lastStatus);
+            break;
+          case SCREEN_PRINTING:
+            drawPrintingScreen(lastStatus);
+            break;
+          case SCREEN_PAUSED:
+            drawPausedScreen(lastStatus);
+            break;
+          case SCREEN_COMPLETE:
+            drawCompleteScreen(lastStatus);
+            break;
+          default:
+            break;
+        }
+        
+        manualMode = true;  // Enter manual mode
+        Serial.printf("Touch: Swipe right - Screen mode: %d (manual)\n", currentScreen);
+      }
       break;
       
     case TOUCH_GESTURE_SWIPE_UP:
-      // Swipe up - show more details or next screen
-      Serial.println("Touch: Swipe up detected");
+      // Swipe up - increase brightness
+      {
+        int currentBrightness = display->getBrightness();
+        int newBrightness = min(255, currentBrightness + 25);
+        display->setBrightness(newBrightness);
+        Serial.printf("Touch: Swipe up - Brightness: %d -> %d\n", currentBrightness, newBrightness);
+        
+        // Show brightness indicator briefly
+        display->clear();
+        display->setTextColor(display->getThemeColors().text);
+        display->drawCenteredText("Brightness", 100, 2);
+        char brightStr[16];
+        sprintf(brightStr, "%d%%", (newBrightness * 100) / 255);
+        display->drawCenteredText(brightStr, 130, 3);
+        delay(500);
+        
+        // Redraw current screen
+        if (currentScreen == SCREEN_IDLE) {
+          drawIdleScreen(lastStatus);
+        } else if (currentScreen == SCREEN_PRINTING) {
+          drawPrintingScreen(lastStatus);
+        }
+      }
       break;
       
     case TOUCH_GESTURE_SWIPE_DOWN:
-      // Swipe down - show less details or previous screen
-      Serial.println("Touch: Swipe down detected");
+      // Swipe down - decrease brightness
+      {
+        int currentBrightness = display->getBrightness();
+        int newBrightness = max(20, currentBrightness - 25);
+        display->setBrightness(newBrightness);
+        Serial.printf("Touch: Swipe down - Brightness: %d -> %d\n", currentBrightness, newBrightness);
+        
+        // Show brightness indicator briefly
+        display->clear();
+        display->setTextColor(display->getThemeColors().text);
+        display->drawCenteredText("Brightness", 100, 2);
+        char brightStr[16];
+        sprintf(brightStr, "%d%%", (newBrightness * 100) / 255);
+        display->drawCenteredText(brightStr, 130, 3);
+        delay(500);
+        
+        // Redraw current screen
+        if (currentScreen == SCREEN_IDLE) {
+          drawIdleScreen(lastStatus);
+        } else if (currentScreen == SCREEN_PRINTING) {
+          drawPrintingScreen(lastStatus);
+        }
+      }
       break;
       
     case TOUCH_DOWN:
