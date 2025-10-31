@@ -40,7 +40,7 @@ void setup() {
   if (touchDriver.begin(18, 19)) { // SDA=18, SCL=19
     Serial.println("Touch driver initialized");
   } else {
-    Serial.println("Touch driver not found");
+    Serial.println("Touch driver not found - continuing without touch");
   }
 
   // Check if device is configured

@@ -7,10 +7,27 @@
 
 #include "TouchDriver.h"
 #include <Wire.h>
-#include <Adafruit_FT6236.h>
 
-// Touch controller instance
-Adafruit_FT6236* ft6236 = nullptr;
+// FT6236 I2C registers
+#define FT6236_ADDR 0x38
+#define FT6236_REG_NUMTOUCHES 0x02
+#define FT6236_REG_TD_STATUS 0x02
+#define FT6236_REG_P1_XH 0x03
+#define FT6236_REG_P1_XL 0x04
+#define FT6236_REG_P1_YH 0x05
+#define FT6236_REG_P1_YL 0x06
+#define FT6236_REG_P1_WEIGHT 0x07
+#define FT6236_REG_P1_MISC 0x08
+
+// FT6236 touch point structure
+struct FT6236_TouchPoint {
+  uint16_t x;
+  uint16_t y;
+  uint8_t weight;
+  uint8_t misc;
+};
+
+static FT6236_TouchPoint ft6236_touchPoint;
 
 TouchDriver::TouchDriver() :
   touchController(nullptr),
@@ -49,59 +66,91 @@ bool TouchDriver::initFT6236(uint8_t sda, uint8_t scl, uint8_t rst, uint8_t intP
     return false;
   }
   
-  ft6236 = new Adafruit_FT6236();
-  
-  // Try different I2C addresses
-  if (ft6236->begin(0x38)) {
-    Serial.println("Touch: FT6236 found at 0x38");
-    return true;
+  // Test I2C communication with FT6236
+  Wire.beginTransmission(FT6236_ADDR);
+  if (Wire.endTransmission() != 0) {
+    Serial.println("Touch: FT6236 not found at 0x38");
+    return false;
   }
   
-  if (ft6236->begin(0x39)) {
-    Serial.println("Touch: FT6236 found at 0x39");
-    return true;
-  }
-  
-  delete ft6236;
-  ft6236 = nullptr;
-  return false;
+  Serial.println("Touch: FT6236 found at 0x38");
+  return true;
 }
 
 void TouchDriver::update() {
-  if (!ft6236) return;
+  // Read touch data from FT6236 via I2C
+  Wire.beginTransmission(FT6236_ADDR);
+  Wire.write(FT6236_REG_TD_STATUS);
+  if (Wire.endTransmission(false) != 0) {
+    return; // I2C error
+  }
   
-  // Get touch points from FT6236
-  TS_Point point = ft6236->getPoint();
+  if (Wire.requestFrom(FT6236_ADDR, 6) != 6) {
+    return; // Not enough data
+  }
   
-  // Check if touch is detected
-  if (point.x != 0 || point.y != 0) {
-    // Touch detected
-    currentPoint.x = point.x;
-    currentPoint.y = point.y;
-    currentPoint.pressure = point.z;
-    currentPoint.valid = true;
+  uint8_t touchStatus = Wire.read();
+  uint8_t numTouches = touchStatus & 0x0F; // Lower 4 bits
+  
+  if (numTouches > 0) {
+    // Read touch point data
+    uint8_t xh = Wire.read();
+    uint8_t xl = Wire.read();
+    uint8_t yh = Wire.read();
+    uint8_t yl = Wire.read();
+    uint8_t weight = Wire.read();
+    uint8_t misc = Wire.read();
     
-    // Handle touch down
-    if (!lastPoint.valid) {
-      currentEvent = TOUCH_DOWN;
-      touchStartTime = millis();
-      gestureInProgress = true;
-    } else {
-      // Check if it's a significant move
-      int16_t deltaX = abs(currentPoint.x - lastPoint.x);
-      int16_t deltaY = abs(currentPoint.y - lastPoint.y);
+    // Extract coordinates (12-bit values)
+    uint16_t x = ((xh & 0x0F) << 8) | xl;
+    uint16_t y = ((yh & 0x0F) << 8) | yl;
+    
+    // Check if touch is detected (coordinates not zero)
+    if (x != 0 || y != 0) {
+      // Touch detected
+      currentPoint.x = x;
+      currentPoint.y = y;
+      currentPoint.pressure = weight; // Use weight as pressure
+      currentPoint.valid = true;
       
-      if (deltaX > 5 || deltaY > 5) {
-        currentEvent = TOUCH_MOVE;
+      // Handle touch down
+      if (!lastPoint.valid) {
+        currentEvent = TOUCH_DOWN;
+        touchStartTime = millis();
+        gestureInProgress = true;
       } else {
-        currentEvent = TOUCH_NONE; // Minor movement, no event
+        // Check if it's a significant move
+        int16_t deltaX = abs(currentPoint.x - lastPoint.x);
+        int16_t deltaY = abs(currentPoint.y - lastPoint.y);
+        
+        if (deltaX > 5 || deltaY > 5) {
+          currentEvent = TOUCH_MOVE;
+        } else {
+          currentEvent = TOUCH_NONE; // Minor movement, no event
+        }
       }
+      
+      lastPoint = currentPoint;
+      lastTouchTime = millis();
+    } else {
+      // No touch detected
+      if (lastPoint.valid) {
+        // Touch was just released
+        if (gesturesEnabled) {
+          currentEvent = detectGesture();
+        } else {
+          currentEvent = TOUCH_UP;
+        }
+        
+        gestureInProgress = false;
+      } else {
+        currentEvent = TOUCH_NONE;
+      }
+      
+      currentPoint.valid = false;
     }
-    
-    lastPoint = currentPoint;
-    lastTouchTime = millis();
   } else {
-    // No touch detected
+    // No touches detected
     if (lastPoint.valid) {
       // Touch was just released
       if (gesturesEnabled) {
@@ -225,11 +274,6 @@ bool TouchDriver::isPointInZone(TouchPoint point, TouchZone zone) {
 }
 
 void TouchDriver::printTouchInfo() {
-  if (!ft6236) {
-    Serial.println("Touch: No controller initialized");
-    return;
-  }
-  
   Serial.printf("Touch: Event=%d, Point=(%d,%d), Valid=%d\n",
                 currentEvent, currentPoint.x, currentPoint.y, currentPoint.valid);
 }
