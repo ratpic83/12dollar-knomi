@@ -42,3 +42,7 @@ env/
 
 # Documentation builds
 docs/_build/
+
+# Large example files (download separately)
+examples/animations/*.gif
+!examples/animations/Spaceman_optimized.gif
