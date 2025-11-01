@@ -178,22 +178,23 @@ void setup() {
         Serial.println("      Connected to Klipper!");
         delay(1500);
       } else {
-        // Klipper not reachable - use demo mode
-        display.setTextColor(display.getThemeColors().secondary);
+        // Klipper not reachable - will retry in loop
+        display.setTextColor(display.getThemeColors().warning);
         display.drawCenteredText("Connection", 80, 1);
         display.drawCenteredText("Failed", 100, 2);
-        display.setTextColor(display.getThemeColors().text);
-        display.drawCenteredText("Using Demo Mode", 130, 1);
-        Serial.println("      Failed to connect to Klipper - using demo mode");
-        delay(3000);
+        display.setTextColor(display.getThemeColors().secondary);
+        display.drawCenteredText("Will retry...", 130, 1);
+        Serial.println("      Failed to connect to Klipper - will retry in loop");
+        delay(2000);
       }
     } else {
-      // WiFi failed - use demo mode
+      // WiFi failed - show error
+      display.setTextColor(display.getThemeColors().error);
       display.drawCenteredText("WiFi FAILED", 80, 2);
       display.setTextColor(display.getThemeColors().secondary);
-      display.drawCenteredText("Demo mode", 110, 1);
-      Serial.println("      WiFi failed - using demo mode");
-      delay(2000);
+      display.drawCenteredText("Check credentials", 110, 1);
+      Serial.println("      WiFi failed - check WifiConfig.h");
+      delay(3000);
     }
   } else {
     // Device not configured, show configuration screen
@@ -216,18 +217,52 @@ void setup() {
 void loop() {
   // Update printer status every 5 seconds (reduced from 2s to minimize network load)
   static unsigned long lastUpdate = 0;
-  static float demoProgress = 0;
   static uint8_t lastValidProgress = 0;  // Keep last known progress
+  static unsigned long lastConnectionAttempt = 0;
+  static int connectionRetries = 0;
   
   if (millis() - lastUpdate > 5000) {
     lastUpdate = millis();
 
     PrinterStatus status;
     
-    // Check if WiFi is connected (real data) or demo mode (fake data)
+    // Check WiFi connection first
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("[ERROR] WiFi disconnected! Attempting reconnect...");
+      WiFi.reconnect();
+      delay(1000);
+    }
+    
+    // Try to get printer status
     if (WiFi.status() == WL_CONNECTED) {
-      // Real data from Klipper
       status = api.getPrinterStatus();
+      
+      // Check if connection succeeded
+      if (!status.connected) {
+        connectionRetries++;
+        Serial.printf("[RETRY] Connection failed (attempt %d). Retrying...\n", connectionRetries);
+        
+        // Show retry message on display every 3 attempts
+        if (connectionRetries % 3 == 0) {
+          display.clear();
+          display.setTextColor(display.getThemeColors().warning);
+          display.drawCenteredText("Connecting...", 100, 2);
+          display.setTextColor(display.getThemeColors().secondary);
+          char retryStr[32];
+          sprintf(retryStr, "Attempt %d", connectionRetries);
+          display.drawCenteredText(retryStr, 130, 1);
+        }
+        
+        // Wait a bit before next attempt
+        delay(1000);
+        return;  // Skip this update cycle
+      } else {
+        // Connection successful
+        if (connectionRetries > 0) {
+          Serial.printf("[SUCCESS] Connected after %d retries!\n", connectionRetries);
+          connectionRetries = 0;
+        }
+      }
       
       // Progress persistence: if we're printing and get 0%, keep last known value
       if (status.state == STATE_PRINTING && status.printProgress == 0 && lastValidProgress > 0) {
@@ -250,25 +285,14 @@ void loop() {
         status.chamberPressure = envData.pressure;
       }
     } else {
-      // DEMO MODE - Generate fake printer data
-      status.connected = true;
-      status.state = STATE_PRINTING;
-      status.hotendTemp = 210.5 + (rand() % 10) / 10.0;
-      status.hotendTarget = 215.0;
-      status.bedTemp = 60.2 + (rand() % 10) / 10.0;
-      status.bedTarget = 60.0;
-      status.chamberTemp = 28.5;
-      status.chamberHumidity = 45.0;
-      status.chamberPressure = 1013.0;
-      status.printProgress = (int)demoProgress;
-      status.printTimeLeft = 3600 - (demoProgress * 36);
-      status.partFanSpeed = 100;
-      status.flowrate = 100;
-      status.feedrate = 100;
-      
-      // Increment demo progress
-      demoProgress += 0.5;
-      if (demoProgress > 100) demoProgress = 0;
+      // WiFi not connected - show error
+      Serial.println("[ERROR] WiFi not connected!");
+      display.clear();
+      display.setTextColor(display.getThemeColors().error);
+      display.drawCenteredText("WiFi Error", 100, 2);
+      display.setTextColor(display.getThemeColors().secondary);
+      display.drawCenteredText("Reconnecting...", 130, 1);
+      return;  // Skip this update cycle
     }
     
     ui.updateStatus(status);
