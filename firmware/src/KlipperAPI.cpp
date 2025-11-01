@@ -54,8 +54,8 @@ PrinterStatus KlipperAPI::getPrinterStatus() {
   // Query printer status with minimal data
   StaticJsonDocument<1024> doc;
   
-  // Simpler query - just get basic status
-  if (!makeRequest("/printer/objects/query?extruder&heater_bed&print_stats", doc)) {
+  // Query with display_status for progress
+  if (!makeRequest("/printer/objects/query?extruder&heater_bed&print_stats&display_status", doc)) {
     return status;
   }
   
