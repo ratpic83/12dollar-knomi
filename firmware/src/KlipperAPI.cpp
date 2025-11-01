@@ -87,6 +87,13 @@ PrinterStatus KlipperAPI::getPrinterStatus() {
   if (result.containsKey("display_status")) {
     float progress = result["display_status"]["progress"] | 0.0;
     status.printProgress = (uint8_t)(progress * 100);
+    #if DEBUG_API
+    Serial.printf("Progress from display_status: %.2f -> %d%%\n", progress, status.printProgress);
+    #endif
+  } else {
+    #if DEBUG_API
+    Serial.println("Warning: display_status not in response!");
+    #endif
   }
   
   // Position

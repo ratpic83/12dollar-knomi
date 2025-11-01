@@ -241,10 +241,12 @@ void loop() {
     
     ui.updateStatus(status);
 
-    // Debug output
-    Serial.printf("State: %d, Hotend: %.1f/%.1f, Bed: %.1f/%.1f, Progress: %d%%\n",
-                  status.state, status.hotendTemp, status.hotendTarget,
-                  status.bedTemp, status.bedTarget, status.printProgress);
+    // Debug output with state name
+    const char* stateNames[] = {"UNKNOWN", "IDLE", "STANDBY", "PRINTING", "PAUSED", "COMPLETE", "ERROR"};
+    Serial.printf("[UPDATE] State: %s (%d), Progress: %d%%, Hotend: %.1f/%.1f, Bed: %.1f/%.1f\n",
+                  stateNames[status.state], status.state, status.printProgress,
+                  status.hotendTemp, status.hotendTarget,
+                  status.bedTemp, status.bedTarget);
   }
 
   // Update UI animations
