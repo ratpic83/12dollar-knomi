@@ -113,20 +113,23 @@ void UIManager::updateStatus(PrinterStatus& status) {
   // Animation cycling logic
   unsigned long currentTime = millis();
   unsigned long timeSinceSwitch = currentTime - lastScreenSwitch;
+  bool modeChanged = false;
   
   // Check if it's time to switch between data and animation
   if (showingAnimation && timeSinceSwitch > ANIMATION_DISPLAY_TIME) {
     showingAnimation = false;
     lastScreenSwitch = currentTime;
     display->clear();
+    modeChanged = true;
   } else if (!showingAnimation && timeSinceSwitch > DATA_DISPLAY_TIME) {
     showingAnimation = true;
     lastScreenSwitch = currentTime;
     display->clear();
+    modeChanged = true;
   }
   
-  // Redraw if screen changed or significant data changed
-  if (newScreen != currentScreen || shouldRedraw(status)) {
+  // Redraw if screen changed, mode changed, or significant data changed
+  if (newScreen != currentScreen || modeChanged || shouldRedraw(status)) {
     // Clear screen only when switching screens
     if (newScreen != currentScreen) {
       display->clear();
