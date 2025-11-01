@@ -196,11 +196,12 @@ void setup() {
 }
 
 void loop() {
-  // Update printer status every 2 seconds
+  // Update printer status every 5 seconds (reduced from 2s to minimize network load)
   static unsigned long lastUpdate = 0;
   static float demoProgress = 0;
+  static uint8_t lastValidProgress = 0;  // Keep last known progress
   
-  if (millis() - lastUpdate > 2000) {
+  if (millis() - lastUpdate > 5000) {
     lastUpdate = millis();
 
     PrinterStatus status;
@@ -209,6 +210,19 @@ void loop() {
     if (WiFi.status() == WL_CONNECTED) {
       // Real data from Klipper
       status = api.getPrinterStatus();
+      
+      // Progress persistence: if we're printing and get 0%, keep last known value
+      if (status.state == STATE_PRINTING && status.printProgress == 0 && lastValidProgress > 0) {
+        status.printProgress = lastValidProgress;
+        Serial.printf("[PERSIST] Using last known progress: %d%%\n", lastValidProgress);
+      } else if (status.printProgress > 0) {
+        lastValidProgress = status.printProgress;
+      }
+      
+      // Reset progress when not printing
+      if (status.state == STATE_IDLE || status.state == STATE_STANDBY || status.state == STATE_COMPLETE) {
+        lastValidProgress = 0;
+      }
       
       // Add environmental data
       EnvironmentalData envData = envSensor.readData();
