@@ -339,25 +339,34 @@ void UIManager::drawProgressCircle(uint8_t progress) {
 void UIManager::update() {
   unsigned long currentTime = millis();
   
-  if (currentTime - lastAnimationUpdate > 100) { // 10 FPS animation
-    lastAnimationUpdate = currentTime;
-    
-    // Update animations based on current screen
-    switch (currentScreen) {
-      case SCREEN_IDLE:
-        updateRollingEyes();
-        break;
-      case SCREEN_PRINTING:
-      case SCREEN_PAUSED:
-        updatePrintingAnimation();
-        break;
-      default:
-        // No animation for other screens
-        break;
+  // If showing animation mode, continuously redraw the animation
+  if (showingAnimation) {
+    if (currentTime - lastAnimationUpdate > 50) { // 20 FPS for smooth animation
+      lastAnimationUpdate = currentTime;
+      
+      switch (currentScreen) {
+        case SCREEN_IDLE:
+          drawIdleAnimation(lastStatus);
+          break;
+        case SCREEN_PRINTING:
+          drawPrintingAnimation(lastStatus);
+          break;
+        default:
+          break;
+      }
     }
-    
-    animationFrame++;
+  } else {
+    // Data mode - only update rolling eyes if on idle screen
+    if (currentTime - lastAnimationUpdate > 100) { // 10 FPS animation
+      lastAnimationUpdate = currentTime;
+      
+      if (currentScreen == SCREEN_IDLE) {
+        updateRollingEyes();
+      }
+    }
   }
+  
+  animationFrame++;
   
   // Handle touch feedback animation
   if (currentTime - lastTouchFeedback < TOUCH_FEEDBACK_DURATION) {
