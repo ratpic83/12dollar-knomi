@@ -146,8 +146,9 @@ bool KlipperAPI::makeRequest(const char* endpoint, JsonDocument& doc) {
   
   // Use HTTPClient for better timeout handling
   HTTPClient http;
-  http.setTimeout(3000);  // 3 second timeout
-  http.setConnectTimeout(3000);  // 3 second connection timeout
+  http.setTimeout(5000);  // 5 second timeout (increased from 3)
+  http.setConnectTimeout(5000);  // 5 second connection timeout
+  http.setReuse(false);  // Don't reuse connections
   
   String url = baseURL + String(endpoint);
   
@@ -174,7 +175,11 @@ bool KlipperAPI::makeRequest(const char* endpoint, JsonDocument& doc) {
   
   if (httpCode != HTTP_CODE_OK) {
     #if DEBUG_API
-      Serial.println("HTTP request failed!");
+      if (httpCode > 0) {
+        Serial.printf("HTTP request failed with code: %d\n", httpCode);
+      } else {
+        Serial.printf("HTTP connection error: %s\n", http.errorToString(httpCode).c_str());
+      }
     #endif
     http.end();
     return false;

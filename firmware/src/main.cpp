@@ -128,29 +128,47 @@ void setup() {
       String portStr = ":" + String(KLIPPER_PORT);
       display.drawCenteredText(portStr, 120, 1);
       
-      // Simple connectivity test first
+      // Retry connection with better error handling
       Serial.println("      Testing HTTP connectivity...");
-      HTTPClient http;
-      http.setTimeout(5000);
-      http.setConnectTimeout(5000);
       String testUrl = "http://" + String(KLIPPER_IP) + ":" + String(KLIPPER_PORT) + "/server/info";
       Serial.print("      URL: ");
       Serial.println(testUrl);
       
-      bool httpBegin = http.begin(testUrl);
-      Serial.print("      HTTP begin: ");
-      Serial.println(httpBegin ? "OK" : "FAILED");
+      bool connected = false;
+      int maxRetries = 3;
       
-      int httpCode = -1;
-      if (httpBegin) {
-        httpCode = http.GET();
-        Serial.print("      HTTP code: ");
-        Serial.println(httpCode);
-        http.end();
+      for (int attempt = 1; attempt <= maxRetries && !connected; attempt++) {
+        Serial.printf("      Attempt %d/%d...\n", attempt, maxRetries);
+        
+        HTTPClient http;
+        http.setTimeout(3000);
+        http.setConnectTimeout(3000);
+        
+        if (http.begin(testUrl)) {
+          int httpCode = http.GET();
+          Serial.print("      HTTP code: ");
+          Serial.println(httpCode);
+          
+          if (httpCode == 200) {
+            connected = true;
+            Serial.println("      Connection successful!");
+          } else if (httpCode > 0) {
+            Serial.printf("      HTTP error: %d\n", httpCode);
+          } else {
+            Serial.printf("      Connection error: %s\n", http.errorToString(httpCode).c_str());
+          }
+          http.end();
+        } else {
+          Serial.println("      HTTP begin failed!");
+        }
+        
+        if (!connected && attempt < maxRetries) {
+          Serial.println("      Retrying in 1 second...");
+          delay(1000);
+        }
       }
       
       Serial.println("      Testing Klipper API...");
-      bool connected = (httpCode == 200);
       
       display.clear();
       if (connected) {
