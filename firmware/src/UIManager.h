@@ -48,6 +48,12 @@ private:
   int animationFrame;
   PrinterStatus lastStatus;
   
+  // Animation cycling
+  unsigned long lastScreenSwitch;
+  bool showingAnimation;
+  static constexpr unsigned long DATA_DISPLAY_TIME = 10000;  // 10 seconds showing data
+  static constexpr unsigned long ANIMATION_DISPLAY_TIME = 5000;  // 5 seconds showing animation
+  
   // Touch feedback
   unsigned long lastTouchFeedback;
   static constexpr unsigned long TOUCH_FEEDBACK_DURATION = 200;
@@ -59,6 +65,10 @@ private:
   void drawPausedScreen(PrinterStatus& status);
   void drawCompleteScreen(PrinterStatus& status);
   void drawErrorScreen();
+  
+  // Animation screen variants
+  void drawIdleAnimation(PrinterStatus& status);
+  void drawPrintingAnimation(PrinterStatus& status);
   
   // UI elements
   void drawStatusBar(PrinterStatus& status);

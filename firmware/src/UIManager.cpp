@@ -10,6 +10,8 @@ UIManager::UIManager() :
   currentScreen(SCREEN_IDLE),
   lastAnimationUpdate(0),
   animationFrame(0),
+  lastScreenSwitch(0),
+  showingAnimation(false),
   lastTouchFeedback(0),
   manualMode(false)
 {
@@ -108,20 +110,46 @@ void UIManager::updateStatus(PrinterStatus& status) {
     newScreen = SCREEN_ERROR;
   }
   
+  // Animation cycling logic
+  unsigned long currentTime = millis();
+  unsigned long timeSinceSwitch = currentTime - lastScreenSwitch;
+  
+  // Check if it's time to switch between data and animation
+  if (showingAnimation && timeSinceSwitch > ANIMATION_DISPLAY_TIME) {
+    showingAnimation = false;
+    lastScreenSwitch = currentTime;
+    display->clear();
+  } else if (!showingAnimation && timeSinceSwitch > DATA_DISPLAY_TIME) {
+    showingAnimation = true;
+    lastScreenSwitch = currentTime;
+    display->clear();
+  }
+  
   // Redraw if screen changed or significant data changed
   if (newScreen != currentScreen || shouldRedraw(status)) {
     // Clear screen only when switching screens
     if (newScreen != currentScreen) {
       display->clear();
+      lastScreenSwitch = currentTime;  // Reset timer on screen change
+      showingAnimation = false;  // Start with data view
     }
     currentScreen = newScreen;
     
+    // Choose between data view and animation view
     switch (currentScreen) {
       case SCREEN_IDLE:
-        drawIdleScreen(status);
+        if (showingAnimation) {
+          drawIdleAnimation(status);
+        } else {
+          drawIdleScreen(status);
+        }
         break;
       case SCREEN_PRINTING:
-        drawPrintingScreen(status);
+        if (showingAnimation) {
+          drawPrintingAnimation(status);
+        } else {
+          drawPrintingScreen(status);
+        }
         break;
       case SCREEN_PAUSED:
         drawPausedScreen(status);
