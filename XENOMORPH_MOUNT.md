@@ -6,14 +6,15 @@ Guide for mounting the PaWe i-print display on a Xenomorph toolhead.
 
 ## 📐 Display Specifications
 
-**ESP32-2424S012C Dimensions:**
-- **Diameter:** 35mm (round PCB)
-- **Thickness:** ~6.6mm total
-  - PCB: 1.6mm
-  - Display: 3mm
-  - USB-C connector: 2mm
+**ESP32-2424S012C with Case:**
+- **Diameter:** 45.4mm (with case)
+- **Thickness:** 11.2mm total (with case)
 - **Display active area:** 28mm diameter (1.28" round LCD)
-- **Mounting:** No mounting holes on PCB
+- **Mounting:** Case-dependent (check your specific case)
+
+**Note:** These measurements are for the display WITH case installed.
+
+⚠️ **IMPORTANT:** Your display (45.4mm) is **LARGER** than BTT KNOMI (40mm). Standard KNOMI mounts will NOT fit without modification!
 
 ---
 
@@ -39,18 +40,22 @@ The Xenomorph likely has a mount designed for BTT KNOMI. You'll need an adapter.
 - Diameter: ~40mm
 - Mounting: 2x M3 screws on sides
 
-**Adapter needed:**
-- Convert KNOMI mount to fit 35mm ESP32 display
-- Friction fit or snap-in design
-- Access to USB-C port on bottom
+**Your display with case:**
+- Diameter: 45.4mm (larger than KNOMI!)
+- Thickness: 11.2mm
+
+**Adapter options:**
+- **Option A:** Replace KNOMI mount entirely with larger mount
+- **Option B:** Design adapter that extends KNOMI mount
+- Access to USB-C port on bottom/back
 
 ### Option 2: Custom Mount Design
 
 **Design requirements:**
-- **Diameter:** 35mm inner diameter
-- **Depth:** 7-8mm to accommodate PCB + USB-C
-- **Retention:** Friction fit or clips (no mounting holes on PCB)
-- **Cable access:** Bottom cutout for USB-C cable
+- **Inner diameter:** 45.5-46mm (snug fit for your cased display)
+- **Depth:** 12mm minimum (11.2mm display + clearance)
+- **Retention:** Depends on your case (friction fit, clips, or screws)
+- **Cable access:** Bottom/back cutout for USB-C cable
 - **Viewing angle:** Slight tilt (10-15°) for better visibility
 
 ---
@@ -60,12 +65,17 @@ The Xenomorph likely has a mount designed for BTT KNOMI. You'll need an adapter.
 ### Base Measurements
 
 ```
-Outer ring: 40mm diameter (match KNOMI mount)
-Inner ring: 35.5mm diameter (snug fit for display)
-Depth: 8mm
-Wall thickness: 2.5mm
-Bottom cutout: 12mm x 5mm (USB-C access)
-Mounting holes: 2x M3 (match Xenomorph KNOMI mount)
+Display diameter: 45.4mm (with case)
+Display thickness: 11.2mm (with case)
+
+Mount design:
+Inner ring: 45.5-46mm diameter (snug fit for cased display)
+Depth: 12-13mm (11.2mm display + clearance)
+Wall thickness: 2.5-3mm
+Bottom/back cutout: 15mm x 8mm (USB-C access)
+Mounting: Depends on Xenomorph mount (M3 screws or custom)
+
+Note: Your display is LARGER than KNOMI (45.4mm vs 40mm)
 ```
 
 ### Features to Include
@@ -191,25 +201,28 @@ Orientation: Print upright for strength
 **FreeCAD/OpenSCAD code:**
 
 ```openscad
-// ESP32-2424S012C adapter ring
+// ESP32-2424S012C with case - adapter ring
+// Display: 45.4mm diameter x 11.2mm thick
+
 difference() {
-    // Outer ring (matches KNOMI mount)
-    cylinder(h=8, d=40, $fn=100);
+    // Outer ring (adjust to match your Xenomorph mount)
+    cylinder(h=12, d=52, $fn=100);  // Outer diameter depends on mount
     
-    // Inner ring (holds display)
+    // Inner ring (holds cased display)
     translate([0, 0, -1])
-    cylinder(h=10, d=35.5, $fn=100);
+    cylinder(h=14, d=45.5, $fn=100);  // 45.5mm for snug fit
     
-    // USB-C cutout
-    translate([-6, -20, -1])
-    cube([12, 10, 10]);
+    // USB-C cutout (adjust position based on your case)
+    translate([-7.5, -26, -1])
+    cube([15, 10, 14]);
 }
 
-// Mounting tabs (if needed)
+// Mounting tabs (adjust based on Xenomorph mount)
+// Note: Your display is larger than KNOMI, may need custom mount
 for (angle = [0, 180]) {
     rotate([0, 0, angle])
-    translate([18, 0, 4])
-    cube([4, 2, 8], center=true);
+    translate([23, 0, 6])
+    cube([4, 2, 12], center=true);
 }
 ```
 
