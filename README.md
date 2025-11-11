@@ -296,7 +296,7 @@ Edit `firmware/src/TouchDriver.cpp` in `detectGesture()`
 
 ## 🎉 Credits
 
-**Created by:** Patrick Weidermann (PaWe)  
+**Created by:** Patric Weidermann (PaWe)  
 **Inspired by:** BTT Knomi  
 **Hardware:** ESP32-2424S012C Round Display  
 **Repository:** [github.com/ratpic83/12dollar-knomi](https://github.com/ratpic83/12dollar-knomi)  
