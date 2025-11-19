@@ -12,7 +12,7 @@
 #define WIFI_PASSWORD "fritzipupa"   // Your WiFi password
 
 // Klipper/Moonraker Settings
-#define KLIPPER_IP "192.168.68.91"         // IP address of your Klipper host
+#define KLIPPER_IP "192.168.68.92"         // IP address of your Klipper host
 #define KLIPPER_PORT 7125                   // Moonraker port (default: 7125)
 
 // Update intervals (milliseconds)
