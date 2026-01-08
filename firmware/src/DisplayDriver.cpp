@@ -218,51 +218,111 @@ void DisplayDriver::drawTemperatureGauge(int16_t x, int16_t y, int16_t r, float 
 }
 
 void DisplayDriver::drawEye(int16_t x, int16_t y, int16_t size, int16_t pupilX, int16_t pupilY, bool blinking) {
-  // Draw eye white
-  fillCircle(x, y, size, COLOR_WHITE);
-  drawCircle(x, y, size, COLOR_BLACK);
-  
   if (!blinking) {
+    // Draw eye white with subtle gradient
+    fillCircle(x, y, size, COLOR_WHITE);
+    
+    // Add subtle shadow for depth
+    for (int i = 0; i < 3; i++) {
+      uint16_t shadowColor = color565(200 - i * 20, 200 - i * 20, 200 - i * 20);
+      drawCircle(x, y + 1, size - i, shadowColor);
+    }
+    
+    // Draw outer eye border with thickness
+    drawCircle(x, y, size, COLOR_BLACK);
+    drawCircle(x, y, size + 1, COLOR_BLACK);
+    
+    // Draw iris with color gradient
+    int16_t irisSize = size / 2 + 2;
+    uint16_t irisColor = getThemeColors().accent;
+    fillCircle(x + pupilX, y + pupilY, irisSize, irisColor);
+    
+    // Add iris detail rings
+    for (int i = 1; i < 3; i++) {
+      uint16_t ringColor = dimColor(irisColor, 150 + i * 30);
+      drawCircle(x + pupilX, y + pupilY, irisSize - i * 2, ringColor);
+    }
+    
     // Draw pupil
-    int16_t pupilSize = size / 2;
+    int16_t pupilSize = size / 3;
     fillCircle(x + pupilX, y + pupilY, pupilSize, COLOR_BLACK);
     
-    // Draw highlight
-    fillCircle(x + pupilX - pupilSize/3, y + pupilY - pupilSize/3, pupilSize/4, COLOR_WHITE);
+    // Draw enhanced highlight with glow
+    int16_t highlightX = x + pupilX - pupilSize/2;
+    int16_t highlightY = y + pupilY - pupilSize/2;
+    fillCircle(highlightX, highlightY, pupilSize/3 + 1, COLOR_WHITE);
+    fillCircle(highlightX + 1, highlightY + 1, pupilSize/4, COLOR_WHITE);
+    
+    // Add secondary smaller highlight
+    fillCircle(x + pupilX + pupilSize/3, y + pupilY + pupilSize/3, 2, color565(200, 200, 200));
   } else {
-    // Draw closed eye (horizontal line)
-    drawLine(x - size, y, x + size, y, COLOR_BLACK);
+    // Draw closed eye with curved line and thickness
+    for (int i = 0; i < 3; i++) {
+      drawLine(x - size, y + i - 1, x + size, y + i - 1, COLOR_BLACK);
+    }
+    
+    // Add subtle eyelash effect
+    for (int lash = -size; lash <= size; lash += size/2) {
+      drawLine(x + lash, y, x + lash, y - 4, COLOR_BLACK);
+    }
   }
 }
 
 void DisplayDriver::drawRollingEyes(int16_t frame) {
-  // Don't clear here - clearing is handled by UIManager when screen changes
-  // This prevents flickering during animation
-  
   // Calculate pupil position with smooth easing (sinusoidal)
-  float t = (frame % 360) / 360.0; // 0 to 1 over 360 frames
-  float easedT = (sin(t * 2 * PI - PI/2) + 1) / 2; // Smooth sine wave
+  float t = (frame % 360) / 360.0;
+  float easedT = (sin(t * 2 * PI - PI/2) + 1) / 2;
   
-  int16_t pupilOffset = 6 + (int16_t)(4 * sin(t * 2 * PI)); // Dynamic range 6-10
+  // Dynamic pupil offset with more natural movement
+  int16_t pupilOffset = 7 + (int16_t)(5 * sin(t * 2 * PI));
   int16_t pupilX = pupilOffset * cos(easedT * 2 * PI);
   int16_t pupilY = pupilOffset * sin(easedT * 2 * PI);
   
-  // Blink with varying duration
-  bool blinking = ((frame % 120) < 8) || ((frame % 180) < 5); // Occasional blinks
+  // More natural blinking pattern
+  bool blinking = ((frame % 150) < 10) || ((frame % 230) < 6);
+  
+  // Enhanced eye parameters
+  int16_t eyeSize = 40;
+  int16_t eyeSpacing = 60;
+  
+  // Add ambient glow effect around eyes when not blinking
+  if (!blinking) {
+    uint8_t glowPulse = 40 + (uint8_t)(30 * sin(frame * 0.015));
+    uint16_t glowColor = dimColor(getThemeColors().accent, glowPulse);
+    
+    // Glow around left eye
+    for (int i = 3; i > 0; i--) {
+      uint16_t layerColor = dimColor(glowColor, glowPulse / i);
+      drawCircle(SCREEN_WIDTH/2 - eyeSpacing, SCREEN_HEIGHT/2, eyeSize + 5 + i * 2, layerColor);
+    }
+    
+    // Glow around right eye
+    for (int i = 3; i > 0; i--) {
+      uint16_t layerColor = dimColor(glowColor, glowPulse / i);
+      drawCircle(SCREEN_WIDTH/2 + eyeSpacing, SCREEN_HEIGHT/2, eyeSize + 5 + i * 2, layerColor);
+    }
+  }
   
   // Draw two eyes with enhanced details
-  int16_t eyeSize = 35;
-  int16_t eyeSpacing = 55;
-  
   drawEye(SCREEN_WIDTH/2 - eyeSpacing, SCREEN_HEIGHT/2, eyeSize, pupilX, pupilY, blinking);
   drawEye(SCREEN_WIDTH/2 + eyeSpacing, SCREEN_HEIGHT/2, eyeSize, pupilX, pupilY, blinking);
   
-  // Add subtle background breathing effect
+  // Add subtle background breathing effect with NEON colors
   if (!blinking) {
-    uint8_t breath = 50 + (uint8_t)(30 * sin(frame * 0.02)); // Slow breathing
-    for (int r = 110; r < 115; r++) {
-      drawCircle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, r, tft.color565(breath, breath, breath));
+    uint8_t breath = 30 + (uint8_t)(25 * sin(frame * 0.012));
+    uint16_t breathColor = dimColor(getThemeColors().secondary, breath);
+    
+    for (int r = 112; r < 118; r++) {
+      drawCircle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, r, breathColor);
     }
+    
+    // Add corner accent dots that pulse
+    uint8_t cornerPulse = 100 + (uint8_t)(100 * sin(frame * 0.01));
+    uint16_t cornerColor = dimColor(getThemeColors().highlight, cornerPulse);
+    fillCircle(20, 20, 3, cornerColor);
+    fillCircle(SCREEN_WIDTH - 20, 20, 3, cornerColor);
+    fillCircle(20, SCREEN_HEIGHT - 20, 3, cornerColor);
+    fillCircle(SCREEN_WIDTH - 20, SCREEN_HEIGHT - 20, 3, cornerColor);
   }
 }
 
@@ -299,8 +359,161 @@ void DisplayDriver::drawErrorIcon(int16_t x, int16_t y, uint16_t color) {
 }
 
 void DisplayDriver::drawCheckIcon(int16_t x, int16_t y, uint16_t color) {
-  // Checkmark icon
+  // Checkmark icon with thicker lines
   drawLine(x - 8, y, x - 3, y + 8, color);
+  drawLine(x - 8, y + 1, x - 3, y + 9, color);
   drawLine(x - 3, y + 8, x + 10, y - 8, color);
+  drawLine(x - 3, y + 9, x + 10, y - 7, color);
   drawCircle(x, y, 15, color);
+  drawCircle(x, y, 16, color);
+}
+
+// Helper function to blend two colors
+uint16_t DisplayDriver::blendColor(uint16_t color1, uint16_t color2, uint8_t alpha) {
+  // Extract RGB components from color1
+  uint8_t r1 = (color1 >> 11) & 0x1F;
+  uint8_t g1 = (color1 >> 5) & 0x3F;
+  uint8_t b1 = color1 & 0x1F;
+  
+  // Extract RGB components from color2
+  uint8_t r2 = (color2 >> 11) & 0x1F;
+  uint8_t g2 = (color2 >> 5) & 0x3F;
+  uint8_t b2 = color2 & 0x1F;
+  
+  // Blend components
+  uint8_t r = (r1 * alpha + r2 * (255 - alpha)) / 255;
+  uint8_t g = (g1 * alpha + g2 * (255 - alpha)) / 255;
+  uint8_t b = (b1 * alpha + b2 * (255 - alpha)) / 255;
+  
+  return (r << 11) | (g << 5) | b;
+}
+
+// Helper function to dim a color
+uint16_t DisplayDriver::dimColor(uint16_t color, uint8_t amount) {
+  uint8_t r = ((color >> 11) & 0x1F) * amount / 255;
+  uint8_t g = ((color >> 5) & 0x3F) * amount / 255;
+  uint8_t b = (color & 0x1F) * amount / 255;
+  return (r << 11) | (g << 5) | b;
+}
+
+// NEON progress ring with glow effect
+void DisplayDriver::drawProgressRingNeon(int16_t x, int16_t y, int16_t r, int16_t thickness, uint8_t progress, uint16_t color) {
+  // Draw outer glow layers for NEON effect
+  for (int glow = 3; glow > 0; glow--) {
+    uint8_t glowAlpha = 80 / glow;
+    uint16_t glowColor = dimColor(color, glowAlpha);
+    int16_t glowR = r + glow * 2;
+    int endAngle = -90 + (360 * progress / 100);
+    drawArc(x, y, glowR, -90, endAngle, glowColor);
+  }
+  
+  // Draw background ring
+  for (int i = 0; i < thickness; i++) {
+    drawCircle(x, y, r - i, dimColor(color, 30));
+  }
+  
+  // Draw main progress arc with multiple layers
+  int endAngle = -90 + (360 * progress / 100);
+  for (int i = 0; i < thickness; i++) {
+    int16_t arcR = r - i;
+    drawArc(x, y, arcR, -90, endAngle, color);
+  }
+  
+  // Add bright highlight on inner edge
+  if (progress > 0) {
+    drawArc(x, y, r - thickness + 2, -90, endAngle, COLOR_WHITE);
+  }
+}
+
+// Draw text with NEON glow effect
+void DisplayDriver::drawGlowText(const char* text, int16_t x, int16_t y, uint8_t size, uint16_t color) {
+  setTextSize(size);
+  
+  // Draw glow layers
+  for (int offset = 2; offset > 0; offset--) {
+    uint16_t glowColor = dimColor(color, 60 / offset);
+    setTextColor(glowColor);
+    
+    // Draw in 8 directions for glow
+    setCursor(x - offset, y); print(text);
+    setCursor(x + offset, y); print(text);
+    setCursor(x, y - offset); print(text);
+    setCursor(x, y + offset); print(text);
+  }
+  
+  // Draw main text
+  setTextColor(color);
+  setCursor(x, y);
+  print(text);
+}
+
+// Draw circle with NEON glow
+void DisplayDriver::drawGlowCircle(int16_t x, int16_t y, int16_t r, uint16_t color, uint8_t intensity) {
+  // Draw outer glow layers
+  for (int i = intensity; i > 0; i--) {
+    uint8_t alpha = (255 * i) / intensity / 3;
+    uint16_t glowColor = dimColor(color, alpha);
+    drawCircle(x, y, r + i, glowColor);
+  }
+  
+  // Draw main circle
+  fillCircle(x, y, r, color);
+  
+  // Add bright center highlight
+  fillCircle(x, y, r / 3, COLOR_WHITE);
+}
+
+// Draw NEON line with thickness and glow
+void DisplayDriver::drawNeonLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color, uint8_t thickness) {
+  // Draw glow layers
+  for (int glow = thickness + 2; glow > thickness; glow--) {
+    uint16_t glowColor = dimColor(color, 50);
+    for (int t = 0; t < glow; t++) {
+      drawLine(x0, y0 + t - glow/2, x1, y1 + t - glow/2, glowColor);
+    }
+  }
+  
+  // Draw main line with thickness
+  for (int t = 0; t < thickness; t++) {
+    drawLine(x0, y0 + t - thickness/2, x1, y1 + t - thickness/2, color);
+  }
+}
+
+// Enhanced printer icon with NEON glow
+void DisplayDriver::drawPrinterIconNeon(int16_t x, int16_t y, uint16_t color) {
+  // Draw glow
+  uint16_t glowColor = dimColor(color, 80);
+  fillRect(x - 1, y - 1, 32, 22, glowColor);
+  fillRect(x + 4, y - 11, 22, 12, glowColor);
+  
+  // Draw main icon with better detail
+  fillRect(x, y, 30, 20, color);
+  fillRect(x + 5, y - 10, 20, 10, color);
+  fillRect(x + 10, y + 20, 10, 5, color);
+  
+  // Add details
+  fillRect(x + 3, y + 3, 24, 2, COLOR_WHITE);
+  fillRect(x + 3, y + 8, 24, 2, COLOR_WHITE);
+  fillRect(x + 3, y + 13, 24, 2, COLOR_WHITE);
+}
+
+// Enhanced temperature icon with NEON glow
+void DisplayDriver::drawTemperatureIconNeon(int16_t x, int16_t y, uint16_t color) {
+  // Draw glow
+  uint16_t glowColor = dimColor(color, 80);
+  drawCircle(x, y + 15, 7, glowColor);
+  fillCircle(x, y + 15, 6, glowColor);
+  
+  // Draw main thermometer
+  drawCircle(x, y + 15, 6, color);
+  fillCircle(x, y + 15, 5, color);
+  fillRect(x - 3, y, 6, 16, color);
+  
+  // Add mercury level
+  fillRect(x - 2, y + 5, 4, 11, COLOR_RED);
+  
+  // Add tick marks
+  drawLine(x + 4, y + 3, x + 8, y + 3, color);
+  drawLine(x + 4, y + 7, x + 8, y + 7, color);
+  drawLine(x + 4, y + 11, x + 8, y + 11, color);
 }
