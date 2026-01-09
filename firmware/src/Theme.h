@@ -11,11 +11,15 @@
 
 // Theme types
 enum ThemeType {
-  THEME_DARK,      // Classic dark theme
-  THEME_LIGHT,     // Light theme
-  THEME_NEON,      // Neon/cyberpunk theme
-  THEME_MINIMAL,   // Minimalist theme
-  THEME_COUNT      // Number of themes
+  THEME_DARK,         // Classic dark theme
+  THEME_LIGHT,        // Light theme
+  THEME_NEON,         // Neon/cyberpunk theme (cyan/magenta)
+  THEME_NEON_PINK,    // Hot pink neon theme
+  THEME_NEON_BLUE,    // Electric blue neon theme
+  THEME_NEON_GREEN,   // Toxic green neon theme
+  THEME_NEON_PURPLE,  // Purple/violet neon theme
+  THEME_MINIMAL,      // Minimalist theme
+  THEME_COUNT         // Number of themes
 };
 
 // Color palette structure
@@ -59,17 +63,69 @@ const ThemeColors THEMES[THEME_COUNT] = {
     0xC618   // dimmed: light gray
   },
 
-  // THEME_NEON - Cyberpunk neon theme
+  // THEME_NEON - Enhanced Cyberpunk neon theme (cyan/magenta)
   {
-    0x0000,  // bg: black
-    0x07FF,  // text: cyan
-    0xF81F,  // accent: magenta
+    0x0010,  // bg: deep black with blue tint
+    0x07FF,  // text: bright cyan
+    0xF81F,  // accent: hot magenta
+    0xFFE0,  // warning: bright yellow
+    0xF800,  // error: bright red
+    0x07E0,  // success: bright green
+    0x051F,  // secondary: electric blue
+    0xFD20,  // highlight: neon orange
+    0x2104   // dimmed: dark blue-gray
+  },
+
+  // THEME_NEON_PINK - Hot pink neon theme
+  {
+    0x0000,  // bg: pure black
+    0xF81F,  // text: hot pink/magenta
+    0xFC1F,  // accent: bright pink
+    0xFFE0,  // warning: yellow
+    0xF800,  // error: red
+    0x07FF,  // success: cyan
+    0xF99E,  // secondary: light pink
+    0xFD20,  // highlight: orange-pink
+    0x4208   // dimmed: dark gray
+  },
+
+  // THEME_NEON_BLUE - Electric blue neon theme
+  {
+    0x0008,  // bg: black with blue tint
+    0x07FF,  // text: bright cyan
+    0x001F,  // accent: deep blue
     0xFFE0,  // warning: yellow
     0xF800,  // error: red
     0x07E0,  // success: green
-    0x001F,  // secondary: blue
-    0xFD20,  // highlight: orange
-    0x4208   // dimmed: dark gray
+    0x051F,  // secondary: electric blue
+    0x07FF,  // highlight: cyan
+    0x2104   // dimmed: dark blue
+  },
+
+  // THEME_NEON_GREEN - Toxic green neon theme
+  {
+    0x0200,  // bg: black with green tint
+    0x07E0,  // text: bright green
+    0xAFE5,  // accent: lime green
+    0xFFE0,  // warning: yellow
+    0xF800,  // error: red
+    0x07FF,  // success: cyan
+    0x87E0,  // secondary: yellow-green
+    0xFFE0,  // highlight: yellow
+    0x2945   // dimmed: dark green
+  },
+
+  // THEME_NEON_PURPLE - Purple/violet neon theme
+  {
+    0x2004,  // bg: black with purple tint
+    0xF81F,  // text: magenta
+    0x781F,  // accent: violet
+    0xFFE0,  // warning: yellow
+    0xF800,  // error: red
+    0x07FF,  // success: cyan
+    0xA01F,  // secondary: purple
+    0xFC1F,  // highlight: bright pink
+    0x4010   // dimmed: dark purple
   },
 
   // THEME_MINIMAL - Clean minimal theme
@@ -91,6 +147,10 @@ const char* const THEME_NAMES[THEME_COUNT] = {
   "Dark",
   "Light",
   "Neon",
+  "Neon Pink",
+  "Neon Blue",
+  "Neon Green",
+  "Neon Purple",
   "Minimal"
 };
 
