@@ -9,10 +9,10 @@ DisplayDriver::DisplayDriver() : currentBrightness(255) {
 }
 
 void DisplayDriver::init() {
-  // Configure PWM for backlight control on GPIO3
+  // Configure PWM for backlight control on GPIO8
   // ledcSetup(channel, freq, resolution_bits)
   ledcSetup(0, 5000, 8);  // Channel 0, 5kHz, 8-bit (0-255)
-  ledcAttachPin(3, 0);    // Attach GPIO3 to channel 0
+  ledcAttachPin(8, 0);    // Attach GPIO8 to channel 0
   
   tft.init();
   tft.setRotation(0);
