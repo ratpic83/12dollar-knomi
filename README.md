@@ -15,6 +15,17 @@ Professional 3D printer monitoring with touch gestures, animated graphics, and r
 - **Power:** USB-C (5V/1A)
 - **Dimensions:** 35mm diameter
 
+### ⚠️ IMPORTANT: Display Library
+
+**This project uses LovyanGFX, NOT TFT_eSPI!**
+
+The ESP32-2424S012C display requires LovyanGFX. Using TFT_eSPI will cause:
+- Black screen
+- Boot loops
+- Store Access Faults
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for details.
+
 ## ✨ Features
 
 ### 🎮 **Touch Gestures**

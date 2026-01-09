@@ -13,6 +13,21 @@
 
 ---
 
+## ⚠️ CRITICAL: Display Library
+
+**This project uses LovyanGFX, NOT TFT_eSPI!**
+
+The ESP32-2424S012C display is **incompatible with TFT_eSPI**. Attempting to use TFT_eSPI will result in:
+- Black screen
+- Boot loops
+- Store Access Faults
+
+**✅ Correct Library:** `lovyan03/LovyanGFX@^1.1.16`
+
+See `platformio.ini` for the complete configuration.
+
+---
+
 ## 📍 Complete Pinout
 
 ### Display (GC9A01)
@@ -22,17 +37,29 @@
 | **SCK** | GPIO6 | SPI Clock |
 | **CS** | GPIO10 | Chip Select |
 | **DC** | GPIO2 | Data/Command |
-| **RST** | GPIO-1 | Reset (not used) |
-| **BL** | GPIO3 | Backlight (PWM) |
+| **RST** | -1 | **NOT USED** (important!) |
+| **BL** | GPIO3 | **Backlight (PWM)** |
 
-**SPI Configuration:**
+**⚠️ Critical Notes:**
+- **Backlight is GPIO3** (not GPIO8!)
+- **RST is -1** (hardware reset not used)
+- **SPI Frequency: 80MHz** (not 40MHz)
+
+**LovyanGFX Configuration:**
 ```cpp
-#define TFT_MOSI 7
-#define TFT_SCLK 6
-#define TFT_CS   10
-#define TFT_DC   2
-#define TFT_RST  -1
-#define TFT_BL   3
+// In DisplayDriver.h
+cfg.pin_sclk = 6;
+cfg.pin_mosi = 7;
+cfg.pin_miso = -1;
+cfg.pin_dc = 2;
+cfg.pin_cs = 10;
+cfg.pin_rst = -1;  // NOT USED!
+cfg.freq_write = 80000000;  // 80MHz
+cfg.freq_read = 20000000;
+
+// Backlight on GPIO3
+pinMode(3, OUTPUT);
+digitalWrite(3, HIGH);
 ```
 
 ---

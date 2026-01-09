@@ -9,10 +9,10 @@ DisplayDriver::DisplayDriver() : currentBrightness(255) {
 }
 
 void DisplayDriver::init() {
-  // Configure PWM for backlight control on GPIO8
+  // Configure PWM for backlight control on GPIO3 (factory config)
   // ledcSetup(channel, freq, resolution_bits)
   ledcSetup(0, 5000, 8);  // Channel 0, 5kHz, 8-bit (0-255)
-  ledcAttachPin(8, 0);    // Attach GPIO8 to channel 0
+  ledcAttachPin(3, 0);    // Attach GPIO3 to channel 0
   
   tft.init();
   tft.setRotation(0);
@@ -62,13 +62,13 @@ void DisplayDriver::drawTouchFeedbackRing(uint8_t alpha) {
   // Draw a fading ring around the screen perimeter
   uint16_t color = getThemeColors().highlight; // Use theme highlight color
   
-  // Draw outer ring
-  tft.drawCircle(120, 120, 118, tft.alphaBlend(alpha, color, TFT_BLACK));
-  tft.drawCircle(120, 120, 117, tft.alphaBlend(alpha, color, TFT_BLACK));
-  
-  // Draw inner ring
-  tft.drawCircle(120, 120, 115, tft.alphaBlend(alpha, color, TFT_BLACK));
-  tft.drawCircle(120, 120, 116, tft.alphaBlend(alpha, color, TFT_BLACK));
+  // Simple dimming based on alpha (LovyanGFX compatible)
+  if (alpha > 128) {
+    tft.drawCircle(120, 120, 118, color);
+    tft.drawCircle(120, 120, 117, color);
+    tft.drawCircle(120, 120, 115, color);
+    tft.drawCircle(120, 120, 116, color);
+  }
 }
 
 void DisplayDriver::fillCircle(int16_t x, int16_t y, int16_t r, uint16_t color) {
@@ -152,33 +152,36 @@ void DisplayDriver::drawArc(int16_t x, int16_t y, int16_t r, int16_t startAngle,
 }
 
 void DisplayDriver::drawProgressRing(int16_t x, int16_t y, int16_t r, int16_t thickness, uint8_t progress, uint16_t color) {
-  // Draw background ring with anti-aliasing
+  uint16_t bgColor = getThemeColors().dimmed;
+  uint16_t glowColor = getThemeColors().highlight;
+  bool isNeon = (getCurrentTheme() == THEME_NEON);
+  
+  // Draw background ring
   for (int i = 0; i < thickness; i++) {
-    int16_t innerR = r - i;
-    int16_t outerR = r - i + 1;
-    
-    // Draw full background circle with subtle gradient
-    fillCircle(x, y, innerR, COLOR_DARK_GRAY);
-    
-    // Add subtle inner glow for depth
-    if (i == 0) {
-      drawCircle(x, y, innerR + 1, COLOR_LIGHT_GRAY);
+    int16_t ringR = r - i;
+    drawCircle(x, y, ringR, bgColor);
+  }
+  
+  // Calculate progress arc
+  int endAngle = -90 + (360 * progress / 100);
+  
+  // NEON theme: outer glow effect
+  if (isNeon && progress > 0) {
+    for (int i = 0; i < 3; i++) {
+      drawArc(x, y, r + i + 1, -90, endAngle, glowColor);
     }
   }
   
-  // Calculate progress arc with anti-aliasing
-  int endAngle = -90 + (360 * progress / 100);
-  
-  // Draw progress arc with multiple thickness layers for anti-aliasing effect
-  for (int i = 0; i < thickness; i++) {
-    int16_t arcR = r - i;
+  // Draw progress arc with multiple layers
+  for (int i = 0; i < thickness + 2; i++) {
+    int16_t arcR = r - i + 1;
     drawArc(x, y, arcR, -90, endAngle, color);
-    
-    // Add inner highlight for 3D effect
-    if (i == 0 && progress > 5) {
-      int16_t highlightR = r - thickness/2;
-      drawArc(x, y, highlightR, -90, endAngle - 10, COLOR_WHITE);
-    }
+  }
+  
+  // NEON theme: inner glow
+  if (isNeon && progress > 5) {
+    int16_t highlightR = r - thickness/2;
+    drawArc(x, y, highlightR, -90, endAngle - 10, COLOR_WHITE);
   }
   
   // Draw center dot if progress > 0
@@ -218,20 +221,39 @@ void DisplayDriver::drawTemperatureGauge(int16_t x, int16_t y, int16_t r, float 
 }
 
 void DisplayDriver::drawEye(int16_t x, int16_t y, int16_t size, int16_t pupilX, int16_t pupilY, bool blinking) {
-  // Draw eye white
-  fillCircle(x, y, size, COLOR_WHITE);
-  drawCircle(x, y, size, COLOR_BLACK);
+  uint16_t eyeColor = getThemeColors().text;
+  uint16_t pupilColor = getThemeColors().accent;
+  uint16_t glowColor = getThemeColors().highlight;
   
   if (!blinking) {
-    // Draw pupil
-    int16_t pupilSize = size / 2;
-    fillCircle(x + pupilX, y + pupilY, pupilSize, COLOR_BLACK);
+    // Draw eye white with subtle glow for NEON theme
+    fillCircle(x, y, size, eyeColor);
     
-    // Draw highlight
-    fillCircle(x + pupilX - pupilSize/3, y + pupilY - pupilSize/3, pupilSize/4, COLOR_WHITE);
+    // NEON glow effect - outer rings
+    if (getCurrentTheme() == THEME_NEON) {
+      drawCircle(x, y, size + 1, glowColor);
+      drawCircle(x, y, size + 2, glowColor);
+    }
+    drawCircle(x, y, size, getThemeColors().secondary);
+    
+    // Draw pupil with enhanced detail
+    int16_t pupilSize = size / 2 + 2; // Slightly larger pupil
+    fillCircle(x + pupilX, y + pupilY, pupilSize, pupilColor);
+    
+    // Multiple highlights for depth
+    fillCircle(x + pupilX - pupilSize/3, y + pupilY - pupilSize/3, pupilSize/3, eyeColor);
+    fillCircle(x + pupilX - pupilSize/4, y + pupilY - pupilSize/4, pupilSize/5, COLOR_WHITE);
+    
+    // NEON theme: add glow to pupil
+    if (getCurrentTheme() == THEME_NEON) {
+      drawCircle(x + pupilX, y + pupilY, pupilSize + 1, glowColor);
+    }
   } else {
-    // Draw closed eye (horizontal line)
-    drawLine(x - size, y, x + size, y, COLOR_BLACK);
+    // Enhanced closed eye animation
+    int16_t lineThickness = 3;
+    for (int i = 0; i < lineThickness; i++) {
+      drawLine(x - size, y + i - 1, x + size, y + i - 1, pupilColor);
+    }
   }
 }
 
