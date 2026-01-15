@@ -8,6 +8,12 @@
 #include "TouchDriver.h"
 #include "WifiConfig.h"
 
+// External declarations for spaceman animation (defined in spaceman_data.cpp)
+extern const uint16_t* spaceman_frames[];
+#define SPACEMAN_FRAME_COUNT 5
+#define SPACEMAN_WIDTH 120
+#define SPACEMAN_HEIGHT 120
+
 // Global instances
 DisplayDriver display;
 UIManager ui;
@@ -102,10 +108,32 @@ void setup() {
     // Device is configured, proceed with normal operation
     Serial.println("Device configured, starting normal operation...");
     
-    // Show boot screen
+    // Show boot screen (PAWE)
     ui.showBootScreen();
     delay(2000);
-
+    
+    // Show Spaceman animation after boot (3 seconds)
+    Serial.println("[BOOT] Showing Spaceman GIF animation...");
+    
+    // Play GIF animation - 5 frames at 120x120, scaled 2x to 240x240, loop for 3 seconds
+    unsigned long spacemanStart = millis();
+    while (millis() - spacemanStart < 3000) {
+      unsigned long elapsed = millis() - spacemanStart;
+      int frameIndex = (elapsed / 200) % SPACEMAN_FRAME_COUNT;  // 200ms per frame = 5fps
+      
+      // Get the current frame data from array
+      const uint16_t* frameData = spaceman_frames[frameIndex];
+      
+      if (frameData) {
+        // Scale 120x120 to 240x240 (2x zoom) using LovyanGFX
+        // pushImageRotateZoom(x, y, center_x, center_y, angle, zoom_x, zoom_y, width, height, data)
+        // Position at screen center (120,120), source center at (60,60)
+        display.getTFT()->pushImageRotateZoom(120, 120, 60, 60, 0, 2.0, 2.0, SPACEMAN_WIDTH, SPACEMAN_HEIGHT, frameData);
+      }
+      
+      delay(200);  // 200ms per frame
+    }
+    
     // Check WiFi status (already connected in setup)
     display.clear();
     display.setTextColor(display.getThemeColors().text);

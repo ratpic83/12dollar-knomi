@@ -5,6 +5,12 @@
 #include "UIManager.h"
 #include "WifiConfig.h"
 
+// External declarations for spaceman animation (defined in spaceman_data.cpp)
+extern const uint16_t* spaceman_frames[];
+#define SPACEMAN_FRAME_COUNT 5
+#define SPACEMAN_WIDTH 120
+#define SPACEMAN_HEIGHT 120
+
 UIManager::UIManager() : 
   display(nullptr),
   currentScreen(SCREEN_IDLE),
@@ -13,7 +19,11 @@ UIManager::UIManager() :
   lastScreenSwitch(0),
   showingAnimation(false),
   lastTouchFeedback(0),
-  manualMode(false)
+  manualMode(false),
+  completeScreenStartTime(0),
+  spacemanStartTime(0),
+  lastSpacemanCheck(0),
+  spacemanShownOnBoot(false)
 {
 }
 
@@ -95,19 +105,71 @@ void UIManager::updateStatus(PrinterStatus& status) {
     return;
   }
   
+  // Show Spaceman animation on first boot (after PAWE screen)
+  if (!spacemanShownOnBoot && currentScreen == SCREEN_BOOT) {
+    currentScreen = SCREEN_SPACEMAN;
+    spacemanStartTime = millis();
+    spacemanShownOnBoot = true;
+    display->clear();
+    Serial.println("[UI] Showing Spaceman boot animation");
+    return;
+  }
+  
+  // Check if Spaceman animation is playing
+  if (currentScreen == SCREEN_SPACEMAN) {
+    if (millis() - spacemanStartTime < SPACEMAN_DURATION) {
+      drawSpacemanAnimation();
+      return;
+    } else {
+      // Animation finished, switch to normal screen
+      currentScreen = SCREEN_IDLE;
+      display->clear();
+      Serial.println("[UI] Spaceman animation finished");
+    }
+  }
+  
+  // Random Spaceman spawn (Easter egg)
+  unsigned long checkTime = millis();
+  if (checkTime - lastSpacemanCheck > SPACEMAN_RANDOM_CHECK) {
+    lastSpacemanCheck = checkTime;
+    if (random(100) < SPACEMAN_SPAWN_CHANCE) {
+      currentScreen = SCREEN_SPACEMAN;
+      spacemanStartTime = millis();
+      display->clear();
+      Serial.println("[UI] 🚀 Random Spaceman spawn!");
+      return;
+    }
+  }
+  
   // Automatic mode: Determine which screen to show based on state
   ScreenType newScreen = currentScreen;
   
   if (status.state == STATE_IDLE || status.state == STATE_STANDBY) {
     newScreen = SCREEN_IDLE;
+    completeScreenStartTime = 0;  // Reset complete screen timer
   } else if (status.state == STATE_PRINTING) {
     newScreen = SCREEN_PRINTING;
+    completeScreenStartTime = 0;  // Reset complete screen timer
   } else if (status.state == STATE_PAUSED) {
     newScreen = SCREEN_PAUSED;
+    completeScreenStartTime = 0;  // Reset complete screen timer
   } else if (status.state == STATE_COMPLETE) {
     newScreen = SCREEN_COMPLETE;
+    
+    // Start timer when first entering Complete screen
+    if (currentScreen != SCREEN_COMPLETE) {
+      completeScreenStartTime = millis();
+    }
+    
+    // Auto-return to Idle after timeout
+    if (completeScreenStartTime > 0 && (millis() - completeScreenStartTime) > COMPLETE_SCREEN_TIMEOUT) {
+      newScreen = SCREEN_IDLE;
+      completeScreenStartTime = 0;
+      Serial.println("[UI] Complete screen timeout - returning to Idle");
+    }
   } else if (status.state == STATE_ERROR) {
     newScreen = SCREEN_ERROR;
+    completeScreenStartTime = 0;  // Reset complete screen timer
   }
   
   // Animation cycling logic
@@ -338,6 +400,15 @@ void UIManager::drawProgressCircle(uint8_t progress) {
 
 void UIManager::update() {
   unsigned long currentTime = millis();
+  
+  // Handle Spaceman animation separately (always animates)
+  if (currentScreen == SCREEN_SPACEMAN) {
+    if (currentTime - lastAnimationUpdate > 200) { // 5 FPS for spaceman
+      lastAnimationUpdate = currentTime;
+      drawSpacemanAnimation();
+    }
+    return;
+  }
   
   // If showing animation mode, continuously redraw the animation
   if (showingAnimation) {
@@ -654,11 +725,30 @@ void UIManager::handleTouchEvent(TouchEvent event, TouchPoint point) {
       }
       break;
       
-    case TOUCH_DOWN:
+    case TOUCH_DOWN: {
       // Touch pressed down - show visual feedback
       lastTouchFeedback = millis();
-      // Could add visual touch feedback here
+      
+      // Triple tap to trigger Spaceman animation
+      static unsigned long lastTapTime = 0;
+      static int tapCount = 0;
+      unsigned long now = millis();
+      
+      if (now - lastTapTime < 500) {  // Within 500ms
+        tapCount++;
+        if (tapCount >= 2) {  // Triple tap (3rd tap)
+          currentScreen = SCREEN_SPACEMAN;
+          spacemanStartTime = millis();
+          display->clear();
+          Serial.println("[UI] 🚀 Spaceman triggered by triple tap!");
+          tapCount = 0;
+        }
+      } else {
+        tapCount = 0;
+      }
+      lastTapTime = now;
       break;
+    }
       
     case TOUCH_UP:
       // Touch released
@@ -670,5 +760,22 @@ void UIManager::handleTouchEvent(TouchEvent event, TouchPoint point) {
       
     default:
       break;
+  }
+}
+
+// Spaceman animation - real GIF from spaceman_gif.h
+void UIManager::drawSpacemanAnimation() {
+  // Calculate animation frame based on time
+  unsigned long elapsed = millis() - spacemanStartTime;
+  int frameIndex = (elapsed / 200) % SPACEMAN_FRAME_COUNT;  // 200ms per frame = 5fps
+  
+  // Get the current frame data from array
+  const uint16_t* frameData = spaceman_frames[frameIndex];
+  
+  if (frameData) {
+    // Scale 120x120 to 240x240 (2x zoom) using LovyanGFX
+    // pushImageRotateZoom(x, y, center_x, center_y, angle, zoom_x, zoom_y, width, height, data)
+    // Position at screen center (120,120), source center at (60,60)
+    display->getTFT()->pushImageRotateZoom(120, 120, 60, 60, 0, 2.0, 2.0, SPACEMAN_WIDTH, SPACEMAN_HEIGHT, frameData);
   }
 }

@@ -15,6 +15,7 @@
 // Screen types
 enum ScreenType {
   SCREEN_BOOT,
+  SCREEN_SPACEMAN,  // Spaceman animation
   SCREEN_IDLE,
   SCREEN_PRINTING,
   SCREEN_PAUSED,
@@ -58,6 +59,18 @@ private:
   unsigned long lastTouchFeedback;
   static constexpr unsigned long TOUCH_FEEDBACK_DURATION = 200;
   bool manualMode;  // True when user manually swipes to a screen
+  
+  // Complete screen timeout
+  unsigned long completeScreenStartTime;
+  static constexpr unsigned long COMPLETE_SCREEN_TIMEOUT = 30000;  // 30 seconds
+  
+  // Spaceman animation
+  unsigned long spacemanStartTime;
+  unsigned long lastSpacemanCheck;
+  bool spacemanShownOnBoot;
+  static constexpr unsigned long SPACEMAN_DURATION = 3000;  // 3 seconds
+  static constexpr unsigned long SPACEMAN_RANDOM_CHECK = 60000;  // Check every 60 seconds
+  static constexpr int SPACEMAN_SPAWN_CHANCE = 5;  // 5% chance to spawn
 
   // Screen drawing functions
   void drawIdleScreen(PrinterStatus& status);
@@ -69,6 +82,7 @@ private:
   // Animation screen variants
   void drawIdleAnimation(PrinterStatus& status);
   void drawPrintingAnimation(PrinterStatus& status);
+  void drawSpacemanAnimation();
   
   // UI elements
   void drawStatusBar(PrinterStatus& status);
