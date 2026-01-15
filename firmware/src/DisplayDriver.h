@@ -72,6 +72,10 @@ public:
 #define SCREEN_HEIGHT 240
 #define SCREEN_RADIUS 120
 
+// Display rotation angle (in degrees, counter-clockwise)
+// Set to -60 for mounting position rotated 60° counter-clockwise
+#define DISPLAY_ROTATION_ANGLE -60
+
 // Legacy color defines for backward compatibility (now use theme colors)
 #define COLOR_BLACK       0x0000
 #define COLOR_WHITE       0xFFFF
@@ -167,6 +171,9 @@ public:
   int16_t getTextWidth(String text, uint8_t size);
   uint16_t blendColor(uint16_t color1, uint16_t color2, uint8_t alpha);
   uint16_t dimColor(uint16_t color, uint8_t amount);
+  
+  // Coordinate rotation for display mounting angle
+  void rotateCoordinates(int16_t& x, int16_t& y);
   
 private:
   LGFX tft;

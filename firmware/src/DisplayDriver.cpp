@@ -15,7 +15,13 @@ void DisplayDriver::init() {
   ledcAttachPin(3, 0);    // Attach GPIO3 to channel 0
   
   tft.init();
-  tft.setRotation(0);
+  
+  // Set display rotation based on mounting angle
+  // DISPLAY_ROTATION_ANGLE = -60° (counter-clockwise)
+  // Testing hardware rotation: 90° (1) = +90°, other direction
+  // LovyanGFX rotation values: 0=0°, 1=90°, 2=180°, 3=270°
+  tft.setRotation(1);  // 90° clockwise (testing for -60° target)
+  
   tft.fillScreen(COLOR_BLACK);
   setBrightness(200);  // This will now use PWM
   
@@ -351,4 +357,29 @@ uint16_t DisplayDriver::dimColor(uint16_t color, uint8_t amount) {
   b = (b * amount) / 255;
   
   return (r << 11) | (g << 5) | b;
+}
+
+// Rotate coordinates around screen center for display mounting angle
+void DisplayDriver::rotateCoordinates(int16_t& x, int16_t& y) {
+  // Only rotate if DISPLAY_ROTATION_ANGLE is non-zero
+  #if DISPLAY_ROTATION_ANGLE != 0
+    // Convert angle to radians
+    float angleRad = DISPLAY_ROTATION_ANGLE * PI / 180.0;
+    
+    // Translate to origin (center of screen)
+    int16_t cx = SCREEN_WIDTH / 2;
+    int16_t cy = SCREEN_HEIGHT / 2;
+    int16_t tx = x - cx;
+    int16_t ty = y - cy;
+    
+    // Rotate around origin
+    float cosAngle = cos(angleRad);
+    float sinAngle = sin(angleRad);
+    int16_t rx = (int16_t)(tx * cosAngle - ty * sinAngle);
+    int16_t ry = (int16_t)(tx * sinAngle + ty * cosAngle);
+    
+    // Translate back
+    x = rx + cx;
+    y = ry + cy;
+  #endif
 }
