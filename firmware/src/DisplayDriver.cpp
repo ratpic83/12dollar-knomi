@@ -326,3 +326,29 @@ void DisplayDriver::drawCheckIcon(int16_t x, int16_t y, uint16_t color) {
   drawLine(x - 3, y + 8, x + 10, y - 8, color);
   drawCircle(x, y, 15, color);
 }
+
+// NEON-specific functions
+void DisplayDriver::drawProgressRingNeon(int16_t x, int16_t y, int16_t r, int16_t thickness, uint8_t progress, uint16_t color) {
+  drawProgressRing(x, y, r, thickness, progress, color);
+}
+
+void DisplayDriver::drawGlowCircle(int16_t x, int16_t y, int16_t r, uint16_t color, uint8_t intensity) {
+  if (getCurrentTheme() == THEME_NEON) {
+    for (int i = 0; i < 3; i++) {
+      drawCircle(x, y, r + i + 1, getThemeColors().highlight);
+    }
+  }
+  fillCircle(x, y, r, color);
+}
+
+uint16_t DisplayDriver::dimColor(uint16_t color, uint8_t amount) {
+  uint8_t r = (color >> 11) & 0x1F;
+  uint8_t g = (color >> 5) & 0x3F;
+  uint8_t b = color & 0x1F;
+  
+  r = (r * amount) / 255;
+  g = (g * amount) / 255;
+  b = (b * amount) / 255;
+  
+  return (r << 11) | (g << 5) | b;
+}
